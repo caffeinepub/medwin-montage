@@ -1,0 +1,197 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.375rem;
+
+    /* Dark cinematic theme — always dark */
+    --background: 0.09 0.005 200;
+    --foreground: 0.91 0.012 80;
+    --card: 0.11 0.006 200;
+    --card-foreground: 0.91 0.012 80;
+    --popover: 0.11 0.006 200;
+    --popover-foreground: 0.91 0.012 80;
+    --primary: 0.72 0.12 75;
+    --primary-foreground: 0.12 0.004 200;
+    --secondary: 0.16 0.008 200;
+    --secondary-foreground: 0.91 0.012 80;
+    --muted: 0.15 0.006 200;
+    --muted-foreground: 0.62 0.018 75;
+    --accent: 0.72 0.12 75;
+    --accent-foreground: 0.12 0.004 200;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+    --border: 0.24 0.015 75;
+    --input: 0.18 0.01 200;
+    --ring: 0.72 0.12 75;
+    --chart-1: 0.72 0.12 75;
+    --chart-2: 0.6 0.118 184.704;
+    --chart-3: 0.398 0.07 227.392;
+    --chart-4: 0.828 0.189 84.429;
+    --chart-5: 0.769 0.188 70.08;
+    --sidebar: 0.09 0.005 200;
+    --sidebar-foreground: 0.91 0.012 80;
+    --sidebar-primary: 0.72 0.12 75;
+    --sidebar-primary-foreground: 0.12 0.004 200;
+    --sidebar-accent: 0.16 0.008 200;
+    --sidebar-accent-foreground: 0.91 0.012 80;
+    --sidebar-border: 0.24 0.015 75;
+    --sidebar-ring: 0.72 0.12 75;
+  }
+
+  /* Force dark mode always */
+  .dark,
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "DM Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: "Playfair Display", serif;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: "Playfair Display", serif;
+  }
+  .font-sans-ui {
+    font-family: "DM Sans", sans-serif;
+  }
+
+  /* Gold gradient text */
+  .text-gold-gradient {
+    background: linear-gradient(
+      135deg,
+      oklch(0.82 0.14 75),
+      oklch(0.65 0.11 65)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Cinematic card hover */
+  .card-cinematic {
+    @apply transition-all duration-300;
+  }
+  .card-cinematic:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px oklch(0 0 0 / 60%), 0 0 30px
+      oklch(0.72 0.12 75 / 15%);
+  }
+
+  /* Filmstrip decorative */
+  .filmstrip {
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 40px,
+      oklch(0.72 0.12 75 / 20%) 40px,
+      oklch(0.72 0.12 75 / 20%) 42px
+    );
+  }
+
+  /* Section fade-in animation */
+  .fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Gold shimmer on hover */
+  .gold-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .gold-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      45deg,
+      transparent 30%,
+      oklch(0.82 0.14 75 / 10%) 50%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+  }
+  .gold-shimmer:hover::after {
+    transform: translateX(100%);
+  }
+
+  /* Grain texture */
+  .grain-overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Play button circle */
+  .play-btn {
+    width: 56px;
+    height: 56px;
+    background: oklch(0.72 0.12 75 / 90%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+  .play-btn:hover {
+    background: oklch(0.82 0.14 75);
+    transform: scale(1.1);
+  }
+
+  /* Gold border glow */
+  .gold-border {
+    border: 1px solid oklch(0.72 0.12 75 / 40%);
+  }
+  .gold-border:hover {
+    border-color: oklch(0.72 0.12 75 / 80%);
+    box-shadow: 0 0 20px oklch(0.72 0.12 75 / 20%);
+  }
+
+  /* Wave footer pattern */
+  .wave-bg {
+    background-image: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 20px,
+      oklch(0.72 0.12 75 / 4%) 20px,
+      oklch(0.72 0.12 75 / 4%) 21px
+    );
+  }
+}
