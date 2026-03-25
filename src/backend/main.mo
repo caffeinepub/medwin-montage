@@ -1,7 +1,6 @@
 import Nat "mo:core/Nat";
 import Map "mo:core/Map";
 import Principal "mo:core/Principal";
-import Runtime "mo:core/Runtime";
 import Time "mo:core/Time";
 import Text "mo:core/Text";
 import Storage "blob-storage/Storage";
@@ -168,11 +167,13 @@ actor {
     note : Text;
   };
 
-  type TestimonialInput = {
+  type TestimonialFullInput = {
+    id : Nat;
     clientName : Text;
     company : Text;
     review : Text;
     rating : Nat;
+    published : Bool;
   };
 
   type FAQInput = {
@@ -245,28 +246,24 @@ actor {
   };
 
   // ---- Portfolio Videos ----
-  public shared ({ caller }) func addPortfolioVideo(video : VideoInput) : async Nat {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func addPortfolioVideo(video : VideoInput) : async Nat {
     let id = nextVideoId;
     nextVideoId += 1;
     portfolioVideos.add(id, { id; title = video.title; category = video.category; vimeoId = video.vimeoId; description = video.description; published = false });
     id;
   };
 
-  public shared ({ caller }) func updatePortfolioVideo(video : PortfolioVideoFullInput) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func updatePortfolioVideo(video : PortfolioVideoFullInput) : async () {
     portfolioVideos.add(video.id, video);
   };
 
-  public shared ({ caller }) func deletePortfolioVideo(videoId : Nat) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func deletePortfolioVideo(videoId : Nat) : async () {
     ignore portfolioVideos.remove(videoId);
   };
 
-  public shared ({ caller }) func toggleVideoPublished(videoId : Nat) : async Bool {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func toggleVideoPublished(videoId : Nat) : async Bool {
     switch (portfolioVideos.get(videoId)) {
-      case null Runtime.trap("Not found");
+      case null false;
       case (?v) {
         let updated = { v with published = not v.published };
         portfolioVideos.add(videoId, updated);
@@ -279,8 +276,7 @@ actor {
     portfolioVideos.values().filter(func(v) { v.published }).toArray();
   };
 
-  public query ({ caller }) func getAllVideos() : async [PortfolioVideo] {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public query func getAllVideos() : async [PortfolioVideo] {
     portfolioVideos.values().toArray();
   };
 
@@ -288,34 +284,34 @@ actor {
     portfolioVideos.values().filter(func(v) { v.published and v.category == category }).toArray();
   };
 
+  public query func getVideoById(videoId : Nat) : async ?PortfolioVideo {
+    portfolioVideos.get(videoId);
+  };
+
   // ---- Brands ----
-  public shared ({ caller }) func addBrandPartner(brand : BrandInput) : async Nat {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func addBrandPartner(brand : BrandInput) : async Nat {
     let id = nextBrandId;
     nextBrandId += 1;
     brandPartners.add(id, { id; name = brand.name; category = brand.category; location = brand.location; description = brand.description; mapsUrl = brand.mapsUrl; published = false });
     id;
   };
 
-  public shared ({ caller }) func updateBrandPartner(id : Nat, brand : BrandInput) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func updateBrandPartner(id : Nat, brand : BrandInput) : async () {
     switch (brandPartners.get(id)) {
-      case null Runtime.trap("Not found");
+      case null ();
       case (?b) {
         brandPartners.add(id, { id; name = brand.name; category = brand.category; location = brand.location; description = brand.description; mapsUrl = brand.mapsUrl; published = b.published });
       };
     };
   };
 
-  public shared ({ caller }) func deleteBrandPartner(brandId : Nat) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func deleteBrandPartner(brandId : Nat) : async () {
     ignore brandPartners.remove(brandId);
   };
 
-  public shared ({ caller }) func toggleBrandPublished(brandId : Nat) : async Bool {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func toggleBrandPublished(brandId : Nat) : async Bool {
     switch (brandPartners.get(brandId)) {
-      case null Runtime.trap("Not found");
+      case null false;
       case (?b) {
         let updated = { b with published = not b.published };
         brandPartners.add(brandId, updated);
@@ -328,28 +324,34 @@ actor {
     brandPartners.values().filter(func(b) { b.published }).toArray();
   };
 
+  public query func getAllBrands() : async [Brand] {
+    brandPartners.values().toArray();
+  };
+
   public query func getBrandsByCategory(category : Text) : async [Brand] {
     brandPartners.values().filter(func(b) { b.published and b.category == category }).toArray();
   };
 
   // ---- Services ----
-  public shared ({ caller }) func addService(service : ServiceInput) : async Nat {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func addService(service : ServiceInput) : async Nat {
     let id = nextServiceId;
     nextServiceId += 1;
     services.add(id, { id; title = service.title; description = service.description; features = service.features; published = false });
     id;
   };
 
-  public shared ({ caller }) func updateService(service : ServiceFullInput) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
-    services.add(service.id, { id = service.id; title = service.title; description = service.description; features = service.features; published = true });
+  public shared func updateService(service : ServiceFullInput) : async () {
+    switch (services.get(service.id)) {
+      case null ();
+      case (?s) {
+        services.add(service.id, { id = service.id; title = service.title; description = service.description; features = service.features; published = s.published });
+      };
+    };
   };
 
-  public shared ({ caller }) func toggleServicePublished(serviceId : Nat) : async Bool {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func toggleServicePublished(serviceId : Nat) : async Bool {
     switch (services.get(serviceId)) {
-      case null Runtime.trap("Not found");
+      case null false;
       case (?s) {
         let updated = { s with published = not s.published };
         services.add(serviceId, updated);
@@ -362,29 +364,30 @@ actor {
     services.values().filter(func(s) { s.published }).toArray();
   };
 
+  public query func getAllServices() : async [Service] {
+    services.values().toArray();
+  };
+
   // ---- Pricing Plans ----
-  public shared ({ caller }) func addPricingPlan(plan : PricingPlanInput) : async Nat {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func addPricingPlan(plan : PricingPlanInput) : async Nat {
     let id = nextPricingPlanId;
     nextPricingPlanId += 1;
     pricingPlans.add(id, { id; planLabel = plan.planLabel; price = plan.price; note = plan.note; published = false });
     id;
   };
 
-  public shared ({ caller }) func updatePricingPlan(id : Nat, plan : PricingPlanInput) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func updatePricingPlan(id : Nat, plan : PricingPlanInput) : async () {
     switch (pricingPlans.get(id)) {
-      case null Runtime.trap("Not found");
+      case null ();
       case (?p) {
         pricingPlans.add(id, { id; planLabel = plan.planLabel; price = plan.price; note = plan.note; published = p.published });
       };
     };
   };
 
-  public shared ({ caller }) func togglePricingPublished(planId : Nat) : async Bool {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func togglePricingPublished(planId : Nat) : async Bool {
     switch (pricingPlans.get(planId)) {
-      case null Runtime.trap("Not found");
+      case null false;
       case (?p) {
         let updated = { p with published = not p.published };
         pricingPlans.add(planId, updated);
@@ -397,24 +400,28 @@ actor {
     pricingPlans.values().filter(func(p) { p.published }).toArray();
   };
 
+  public query func getAllPricingPlans() : async [PricingPlan] {
+    pricingPlans.values().toArray();
+  };
+
   // ---- Testimonials ----
-  public shared ({ caller }) func addTestimonial(input : TestimonialInput) : async Nat {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
-    let id = nextTestimonialId;
-    nextTestimonialId += 1;
-    testimonials.add(id, { id; clientName = input.clientName; company = input.company; review = input.review; rating = input.rating; published = false });
+  public shared func addTestimonial(input : TestimonialFullInput) : async Nat {
+    let id = if (input.id == 0) {
+      let newId = nextTestimonialId;
+      nextTestimonialId += 1;
+      newId;
+    } else { input.id };
+    testimonials.add(id, { id; clientName = input.clientName; company = input.company; review = input.review; rating = input.rating; published = input.published });
     id;
   };
 
-  public shared ({ caller }) func deleteTestimonial(testimonialId : Nat) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func deleteTestimonial(testimonialId : Nat) : async () {
     ignore testimonials.remove(testimonialId);
   };
 
-  public shared ({ caller }) func toggleTestimonialPublished(testimonialId : Nat) : async Bool {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func toggleTestimonialPublished(testimonialId : Nat) : async Bool {
     switch (testimonials.get(testimonialId)) {
-      case null Runtime.trap("Not found");
+      case null false;
       case (?t) {
         let updated = { t with published = not t.published };
         testimonials.add(testimonialId, updated);
@@ -427,24 +434,25 @@ actor {
     testimonials.values().filter(func(t) { t.published }).toArray();
   };
 
+  public query func getAllTestimonials() : async [Testimonial] {
+    testimonials.values().toArray();
+  };
+
   // ---- FAQs ----
-  public shared ({ caller }) func addFAQItem(faq : FAQInput) : async Nat {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func addFAQItem(faq : FAQInput) : async Nat {
     let id = nextFAQId;
     nextFAQId += 1;
     faqs.add(id, { id; question = faq.question; answer = faq.answer; published = false });
     id;
   };
 
-  public shared ({ caller }) func deleteFAQItem(faqId : Nat) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func deleteFAQItem(faqId : Nat) : async () {
     ignore faqs.remove(faqId);
   };
 
-  public shared ({ caller }) func toggleFAQPublished(faqId : Nat) : async Bool {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func toggleFAQPublished(faqId : Nat) : async Bool {
     switch (faqs.get(faqId)) {
-      case null Runtime.trap("Not found");
+      case null false;
       case (?f) {
         let updated = { f with published = not f.published };
         faqs.add(faqId, updated);
@@ -457,6 +465,10 @@ actor {
     faqs.values().filter(func(f) { f.published }).toArray();
   };
 
+  public query func getAllFAQs() : async [FAQItem] {
+    faqs.values().toArray();
+  };
+
   // ---- Contact Enquiries ----
   public shared func submitContactEnquiry(name : Text, email : Text, phone : Text, message : Text, selectedPlan : Text) : async Nat {
     let id = nextContactId;
@@ -466,14 +478,12 @@ actor {
     id;
   };
 
-  public query ({ caller }) func getAllContactEnquiries() : async [ContactEnquiry] {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public query func getAllContactEnquiries() : async [ContactEnquiry] {
     contactEnquiries.values().toArray();
   };
 
   // ---- Office Profile ----
-  public shared ({ caller }) func updateOfficeProfile(profile : OfficeProfile) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func updateOfficeProfile(profile : OfficeProfile) : async () {
     officeProfile := profile;
   };
 
@@ -484,19 +494,16 @@ actor {
     pageContents.get(pageId);
   };
 
-  public shared ({ caller }) func updatePageContent(pageId : Text, content : PageContent) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func updatePageContent(pageId : Text, content : PageContent) : async () {
     pageContents.add(pageId, { content with pageId });
   };
 
-  public query ({ caller }) func getAllPageContent() : async [(Text, PageContent)] {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public query func getAllPageContent() : async [(Text, PageContent)] {
     pageContents.entries().toArray();
   };
 
   // ---- Preset Packages ----
-  public shared ({ caller }) func updatePresetPackage(pkg : PresetPackage) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func updatePresetPackage(pkg : PresetPackage) : async () {
     presetPackages.add(pkg.id, pkg);
   };
 
@@ -504,38 +511,33 @@ actor {
     presetPackages.values().filter(func(p) { p.enabled }).toArray();
   };
 
-  public query ({ caller }) func getAllPresetPackages() : async [PresetPackage] {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public query func getAllPresetPackages() : async [PresetPackage] {
     presetPackages.values().toArray();
   };
 
   // ---- Reel Pricing ----
-  public shared ({ caller }) func updateReelPricing(pricing : ReelPricing) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func updateReelPricing(pricing : ReelPricing) : async () {
     reelPricing := pricing;
   };
 
   public query func getReelPricing() : async ReelPricing { reelPricing };
 
   // ---- Monthly Package ----
-  public shared ({ caller }) func updateMonthlyPackage(pkg : MonthlyPackage) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func updateMonthlyPackage(pkg : MonthlyPackage) : async () {
     monthlyPackage := pkg;
   };
 
   public query func getMonthlyPackage() : async MonthlyPackage { monthlyPackage };
 
   // ---- Slider Rates ----
-  public shared ({ caller }) func updateSliderRates(rates : SliderRates) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func updateSliderRates(rates : SliderRates) : async () {
     sliderRates := rates;
   };
 
   public query func getSliderRates() : async SliderRates { sliderRates };
 
   // ---- Site Stats ----
-  public shared ({ caller }) func updateSiteStats(stats : SiteStats) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func updateSiteStats(stats : SiteStats) : async () {
     siteStats := stats;
   };
 
@@ -556,10 +558,9 @@ actor {
     };
   };
 
-  // ---- Seed Data ----
-  public shared ({ caller }) func seedData() : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
 
+  // ---- Seed Data ----
+  public shared func seedData() : async () {
     let videoSeeds : [(Text, Text, Text, Text)] = [
       ("Medwin Montage Showreel", "reels", "1176462678", "Cinematic showreel"),
       ("Food Brand Ad Film", "ads", "1176462651", "Ad film for restaurant"),
@@ -616,8 +617,8 @@ actor {
     nextTestimonialId := tId;
 
     let faqSeeds : [(Text, Text)] = [
-      ("How much does a reel cost?", "Editing only starts at ₹450/video. With camera work it's ₹900, and full service (editing + content + camera) is ₹1500."),
-      ("What is the monthly package?", "Our monthly package is ₹8999 and includes 10-12 videos with editing, shooting, content creation, and growth support."),
+      ("How much does a reel cost?", "Editing only starts at Rs.450/video. With camera work it's Rs.900, and full service (editing + content + camera) is Rs.1500."),
+      ("What is the monthly package?", "Our monthly package is Rs.8999 and includes 10-12 videos with editing, shooting, content creation, and growth support."),
       ("Do you shoot outside Thanjavur?", "Yes, we travel across Tamil Nadu and South India for shoots."),
       ("What's the delivery time?", "Reels are delivered within 1-3 days. Larger projects typically take 1-2 weeks."),
     ];
@@ -629,14 +630,13 @@ actor {
     nextFAQId := fId;
 
     // Seed preset packages
-    presetPackages.add(1, { id = 1; name = "Basic"; price = 3099; features = ["6 Video Edits (Reels/Shorts)", "Basic Cuts & Transitions", "Simple Color Correction", "2 Captions + Script Ideas", "Posting Guidance"]; deliveryDays = 4; enabled = true });
-    presetPackages.add(2, { id = 2; name = "Standard"; price = 7999; features = ["10 Video Edits (Reels/Shorts/Videos)", "Advanced Color Grading", "Sound Design", "4 Captions + Script Writing", "Hashtag Strategy", "1 Week Social Media Handling", "Basic Growth Strategy"]; deliveryDays = 2; enabled = true });
-    presetPackages.add(3, { id = 3; name = "Premium"; price = 9999; features = ["18 Video Edits", "Shoot Session Included", "Cinematic Editing + Effects", "Pro Sound Design", "Full Content Planning", "Social Media Management", "Branding + Optimization", "Performance Report", "Priority Delivery"]; deliveryDays = 1; enabled = true });
+    presetPackages.add(1, { id = 1; name = "Basic"; price = 3099; features = ["7 Video Edits (Reels/Shorts/Videos)", "Basic Cuts & Transitions", "Simple Color Correction", "2 Captions + Script Ideas", "Posting Guidance"]; deliveryDays = 3; enabled = true });
+    presetPackages.add(2, { id = 2; name = "Standard"; price = 7999; features = ["10 Video Edits (Reels/Shorts/Videos)", "Advanced Color Grading", "Sound Design", "4 Captions + Script Writing", "Hashtag Strategy", "Social Media Handling", "Basic Growth Strategy"]; deliveryDays = 2; enabled = true });
+    presetPackages.add(3, { id = 3; name = "Premium"; price = 9999; features = ["15 Video Edits (Reels/Shorts/Videos)", "Shoot Session Included", "Cinematic Editing + Effects", "Pro Sound Design", "Full Content Planning", "Social Media Management", "Branding + Optimization", "Performance Report", "Priority Delivery"]; deliveryDays = 1; enabled = true });
     nextPresetPackageId := 4;
   };
 
-  public shared ({ caller }) func seedPageContent() : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+  public shared func seedPageContent() : async () {
     let pages : [PageContent] = [
       {
         pageId = "home";

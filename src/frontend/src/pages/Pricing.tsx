@@ -1,6 +1,7 @@
 import { CheckCircle, MessageCircle } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
+import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
 import {
@@ -33,10 +34,10 @@ const FALLBACK_PRESETS = [
       "10 Video Edits (Reels/Shorts/Videos)",
       "Advanced Color Grading",
       "Sound Design",
-      "4 Captions + Script Writing",
+      "Captions + Script Writing",
       "Hashtag Strategy",
       "Social Media Handling",
-      "Basic Growth Strategy",
+      "Growth Strategy",
     ],
     deliveryDays: 1n,
     enabled: true,
@@ -123,7 +124,9 @@ export default function Pricing() {
   const calcMsg = `Hi Medwin Montage! I'd like to book a custom package:\n- Editing: ${editingQty} videos\n- Videography: ${videoQty} shoots\n- Content: ${contentQty} items\n- Other: ${otherQty}\nEstimated Total: ₹${calcTotal.toLocaleString("en-IN")}`;
 
   return (
-    <div>
+    <div className="relative">
+      <PageBackground src="/assets/generated/bg-pricing.dim_1920x1080.jpg" />
+
       <PageHero
         title="Pricing"
         subtitle="Transparent pricing for every stage of your content journey"
@@ -153,7 +156,7 @@ export default function Pricing() {
                     className={`relative rounded-sm p-8 flex flex-col ${
                       isHighlight
                         ? "bg-gradient-to-b from-gold/10 to-card border-2 border-gold shadow-gold-lg"
-                        : "bg-card border border-border gold-border"
+                        : "bg-black border border-gold/50 gold-border"
                     }`}
                     data-ocid={`pricing.item.${i + 1}`}
                   >
@@ -243,7 +246,7 @@ export default function Pricing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.1 }}
-                className="p-6 bg-card border border-border rounded-sm gold-border text-center"
+                className="p-6 bg-black border border-gold/50 rounded-sm gold-border text-center"
                 data-ocid={`reel.item.${i + 1}`}
               >
                 <p className="text-xs text-gold uppercase tracking-widest mb-3 font-sans-ui">
@@ -354,7 +357,7 @@ export default function Pricing() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mt-10 p-8 bg-card border border-border rounded-sm"
+            className="mt-10 p-8 bg-black border border-gold/50 rounded-sm"
             data-ocid="calculator.card"
           >
             <div className="space-y-8">

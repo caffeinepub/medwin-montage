@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { motion, useInView } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import PageBackground from "../components/PageBackground";
 import SectionTitle from "../components/SectionTitle";
 import {
   useGetPublishedBrands,
@@ -109,8 +110,8 @@ function VimeoCard({
 
   if (isMobile) {
     return (
-      <div className="relative rounded-sm overflow-hidden bg-black border border-border/50 gold-border">
-        <div className="aspect-video relative flex items-center justify-center bg-gradient-to-br from-zinc-900 to-black">
+      <div className="relative rounded-sm overflow-hidden bg-black border border-gold/50 gold-border">
+        <div className="aspect-[9/16] relative flex items-center justify-center bg-gradient-to-br from-zinc-900 to-black">
           {!playing ? (
             <>
               <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
@@ -147,8 +148,8 @@ function VimeoCard({
   }
 
   return (
-    <div className="relative rounded-sm overflow-hidden bg-black border border-border/50 gold-border group">
-      <div className="aspect-video relative">
+    <div className="relative rounded-sm overflow-hidden bg-black border border-gold/50 gold-border group">
+      <div className="aspect-[9/16] relative">
         <iframe
           src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1&muted=1&loop=1&background=1`}
           className="absolute inset-0 w-full h-full"
@@ -197,7 +198,9 @@ export default function Home() {
   const viewsGenerated = stats ? Number(stats.viewsGenerated) : 3;
 
   return (
-    <div className="overflow-hidden">
+    <div className="overflow-hidden relative">
+      <PageBackground src="/assets/generated/bg-home.dim_1920x1080.jpg" />
+
       {/* HERO */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
@@ -219,7 +222,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-gold text-xs uppercase tracking-[0.4em] mb-6 font-sans-ui"
           >
-            Creative Studio · Thanjavur
+            Freelancers · Tamilnadu
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 40 }}
@@ -359,7 +362,7 @@ export default function Home() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-30px" }}
                   transition={{ duration: 0.4, delay: i * 0.08 }}
-                  className="flex flex-col items-center text-center p-6 bg-card border border-border/50 rounded-sm gold-border card-cinematic"
+                  className="flex flex-col items-center text-center p-6 bg-black border border-gold/50 rounded-sm gold-border card-cinematic"
                   data-ocid={`services.item.${i + 1}`}
                 >
                   <Icon className="w-8 h-8 text-gold mb-3" />
@@ -388,7 +391,7 @@ export default function Home() {
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="border border-border/50 rounded-sm p-6 text-center gold-border card-cinematic"
+                className="border border-gold/50 rounded-sm p-6 text-center gold-border card-cinematic"
                 data-ocid={`brands.item.${i + 1}`}
               >
                 <p className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-widest">
@@ -401,7 +404,7 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gold/10 border-y border-gold/30">
+      <section className="py-20 bg-charcoal border-y border-gold/30">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <motion.p
             initial={{ opacity: 0, scale: 0.95 }}

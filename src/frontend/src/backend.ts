@@ -216,6 +216,50 @@ export enum UserRole {
     user = "user",
     guest = "guest"
 }
+export interface PageSection {
+    id: string;
+    heading: string;
+    description: string;
+    imageUrl: string;
+    visible: boolean;
+}
+export interface PageContent {
+    pageId: string;
+    heroTitle: string;
+    heroSubtitle: string;
+    heroBackgroundImage: string;
+    sections: Array<PageSection>;
+}
+export interface PresetPackage {
+    id: bigint;
+    name: string;
+    price: bigint;
+    features: Array<string>;
+    deliveryDays: bigint;
+    enabled: boolean;
+}
+export interface ReelPricing {
+    editingOnly: bigint;
+    editingCamera: bigint;
+    editingContentCamera: bigint;
+}
+export interface MonthlyPackage {
+    price: bigint;
+    videoCount: bigint;
+    description: string;
+    enabled: boolean;
+}
+export interface SliderRates {
+    editing: bigint;
+    videography: bigint;
+    content: bigint;
+    other: bigint;
+}
+export interface SiteStats {
+    videosDelivered: bigint;
+    happyClients: bigint;
+    viewsGenerated: bigint;
+}
 export interface backendInterface {
     _caffeineStorageBlobIsLive(hash: Uint8Array): Promise<boolean>;
     _caffeineStorageBlobsToDelete(): Promise<Array<Uint8Array>>;
@@ -231,21 +275,38 @@ export interface backendInterface {
     addService(service: ServiceInput): Promise<bigint>;
     addTestimonial(input: TestimonialFullInput): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    deleteBrandPartner(brandId: bigint): Promise<void>;
+    deleteFAQItem(faqId: bigint): Promise<void>;
+    deletePortfolioVideo(videoId: bigint): Promise<void>;
+    deleteTestimonial(testimonialId: bigint): Promise<void>;
+    getAllBrands(): Promise<Array<Brand>>;
     getAllContactEnquiries(): Promise<Array<ContactEnquiry>>;
+    getAllFAQs(): Promise<Array<FAQItem>>;
+    getAllPageContent(): Promise<Array<[string, PageContent]>>;
+    getAllPresetPackages(): Promise<Array<PresetPackage>>;
+    getAllPricingPlans(): Promise<Array<PricingPlan>>;
+    getAllServices(): Promise<Array<Service>>;
+    getAllTestimonials(): Promise<Array<Testimonial>>;
     getAllVideos(): Promise<Array<PortfolioVideo>>;
     getBrandsByCategory(category: string): Promise<Array<Brand>>;
     getCallerUserRole(): Promise<UserRole>;
+    getMonthlyPackage(): Promise<MonthlyPackage>;
     getOfficeProfile(): Promise<OfficeProfile>;
+    getPageContent(pageId: string): Promise<PageContent | null>;
+    getPresetPackages(): Promise<Array<PresetPackage>>;
     getPublishedBrands(): Promise<Array<Brand>>;
     getPublishedFAQs(): Promise<Array<FAQItem>>;
     getPublishedPricingPlans(): Promise<Array<PricingPlan>>;
     getPublishedServices(): Promise<Array<Service>>;
     getPublishedTestimonials(): Promise<Array<Testimonial>>;
     getPublishedVideos(): Promise<Array<PortfolioVideo>>;
+    getReelPricing(): Promise<ReelPricing>;
     getServicesAndPricing(): Promise<{
         pricing: Array<PricingPlan>;
         services: Array<Service>;
     }>;
+    getSiteStats(): Promise<SiteStats>;
+    getSliderRates(): Promise<SliderRates>;
     getVideoById(videoId: bigint): Promise<PortfolioVideo | null>;
     getVideosByCategory(category: string): Promise<Array<PortfolioVideo>>;
     isCallerAdmin(): Promise<boolean>;
@@ -254,6 +315,7 @@ export interface backendInterface {
         videos: Array<PortfolioVideo>;
     }>;
     seedData(): Promise<void>;
+    seedPageContent(): Promise<void>;
     submitContactEnquiry(name: string, email: string, phone: string, message: string, selectedPlan: string): Promise<bigint>;
     toggleBrandPublished(brandId: bigint): Promise<boolean>;
     toggleFAQPublished(faqId: bigint): Promise<boolean>;
@@ -262,10 +324,16 @@ export interface backendInterface {
     toggleTestimonialPublished(testimonialId: bigint): Promise<boolean>;
     toggleVideoPublished(videoId: bigint): Promise<boolean>;
     updateBrandPartner(id: bigint, brand: BrandInput): Promise<void>;
+    updateMonthlyPackage(pkg: MonthlyPackage): Promise<void>;
     updateOfficeProfile(profile: OfficeProfile): Promise<void>;
+    updatePageContent(pageId: string, content: PageContent): Promise<void>;
     updatePortfolioVideo(video: PortfolioVideoFullInput): Promise<void>;
+    updatePresetPackage(pkg: PresetPackage): Promise<void>;
     updatePricingPlan(id: bigint, plan: PricingPlanInput): Promise<void>;
+    updateReelPricing(pricing: ReelPricing): Promise<void>;
     updateService(service: ServiceFullInput): Promise<void>;
+    updateSiteStats(stats: SiteStats): Promise<void>;
+    updateSliderRates(rates: SliderRates): Promise<void>;
 }
 import type { PortfolioVideo as _PortfolioVideo, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
@@ -876,6 +944,343 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.updateService(arg0);
+            return result;
+        }
+    }
+    async deleteBrandPartner(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteBrandPartner(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteBrandPartner(arg0);
+            return result;
+        }
+    }
+    async deleteFAQItem(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteFAQItem(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteFAQItem(arg0);
+            return result;
+        }
+    }
+    async deletePortfolioVideo(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deletePortfolioVideo(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deletePortfolioVideo(arg0);
+            return result;
+        }
+    }
+    async deleteTestimonial(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteTestimonial(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteTestimonial(arg0);
+            return result;
+        }
+    }
+
+    async getAllBrands(): Promise<Array<Brand>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllBrands();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllBrands();
+            return result;
+        }
+    }
+    async getAllFAQs(): Promise<Array<FAQItem>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllFAQs();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllFAQs();
+            return result;
+        }
+    }
+    async getAllPageContent(): Promise<Array<[string, PageContent]>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllPageContent();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllPageContent();
+            return result;
+        }
+    }
+    async getAllPresetPackages(): Promise<Array<PresetPackage>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllPresetPackages();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllPresetPackages();
+            return result;
+        }
+    }
+    async getAllPricingPlans(): Promise<Array<PricingPlan>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllPricingPlans();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllPricingPlans();
+            return result;
+        }
+    }
+    async getAllServices(): Promise<Array<Service>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllServices();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllServices();
+            return result;
+        }
+    }
+    async getAllTestimonials(): Promise<Array<Testimonial>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllTestimonials();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllTestimonials();
+            return result;
+        }
+    }
+    async getMonthlyPackage(): Promise<MonthlyPackage> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMonthlyPackage();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMonthlyPackage();
+            return result;
+        }
+    }
+    async getPageContent(arg0: string): Promise<PageContent | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPageContent(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPageContent(arg0);
+            return result;
+        }
+    }
+    async getPresetPackages(): Promise<Array<PresetPackage>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPresetPackages();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPresetPackages();
+            return result;
+        }
+    }
+    async getReelPricing(): Promise<ReelPricing> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getReelPricing();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getReelPricing();
+            return result;
+        }
+    }
+    async getSiteStats(): Promise<SiteStats> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getSiteStats();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getSiteStats();
+            return result;
+        }
+    }
+    async getSliderRates(): Promise<SliderRates> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getSliderRates();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getSliderRates();
+            return result;
+        }
+    }
+    async seedPageContent(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.seedPageContent();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.seedPageContent();
+            return result;
+        }
+    }
+    async updateMonthlyPackage(arg0: MonthlyPackage): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateMonthlyPackage(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateMonthlyPackage(arg0);
+            return result;
+        }
+    }
+    async updatePageContent(arg0: string, arg1: PageContent): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updatePageContent(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updatePageContent(arg0, arg1);
+            return result;
+        }
+    }
+    async updatePresetPackage(arg0: PresetPackage): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updatePresetPackage(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updatePresetPackage(arg0);
+            return result;
+        }
+    }
+    async updateReelPricing(arg0: ReelPricing): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateReelPricing(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateReelPricing(arg0);
+            return result;
+        }
+    }
+    async updateSiteStats(arg0: SiteStats): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateSiteStats(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateSiteStats(arg0);
+            return result;
+        }
+    }
+    async updateSliderRates(arg0: SliderRates): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateSliderRates(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateSliderRates(arg0);
             return result;
         }
     }

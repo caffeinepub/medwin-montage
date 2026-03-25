@@ -1,5 +1,6 @@
 import { Award, Camera, CheckCircle, Users } from "lucide-react";
 import { motion } from "motion/react";
+import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
 
@@ -46,7 +47,9 @@ const milestones = [
 
 export default function About() {
   return (
-    <div>
+    <div className="relative">
+      <PageBackground src="/assets/generated/bg-about.dim_1920x1080.jpg" />
+
       <PageHero
         title="About Medwin Montage"
         subtitle="A creative studio built on passion, precision, and storytelling."
@@ -209,7 +212,7 @@ export default function About() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: i * 0.1 }}
-                  className="p-6 bg-card border border-border/50 rounded-sm gold-border card-cinematic"
+                  className="p-6 bg-black border border-gold/50 rounded-sm gold-border card-cinematic"
                   data-ocid={`about.item.${i + 1}`}
                 >
                   <Icon className="w-8 h-8 text-gold mb-4" />
@@ -227,7 +230,7 @@ export default function About() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-gold/10 border-y border-gold/30 text-center">
+      <section className="py-16 bg-charcoal border-y border-gold/30 text-center">
         <div className="max-w-2xl mx-auto px-4">
           <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground uppercase mb-4">
             Ready to Tell Your Story?

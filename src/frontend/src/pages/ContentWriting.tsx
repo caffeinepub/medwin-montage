@@ -1,5 +1,6 @@
 import { BookOpen, MessageSquare, PenLine, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
+import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
 
@@ -52,7 +53,9 @@ const areas = [
 
 export default function ContentWriting() {
   return (
-    <div>
+    <div className="relative">
+      <PageBackground src="/assets/generated/bg-content-writing.dim_1920x1080.jpg" />
+
       <PageHero
         title="Content Writing"
         subtitle="Words that work — scripts, captions, and stories that move your audience"
@@ -72,7 +75,7 @@ export default function ContentWriting() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="bg-card border border-border rounded-sm p-8 gold-border card-cinematic"
+                  className="bg-black border border-gold/50 rounded-sm p-8 gold-border card-cinematic"
                   data-ocid={`content.item.${i + 1}`}
                 >
                   <Icon className="w-10 h-10 text-gold mb-5" />
@@ -100,7 +103,7 @@ export default function ContentWriting() {
         </div>
       </section>
 
-      <section className="py-16 bg-gold/10 border-y border-gold/30">
+      <section className="py-16 bg-charcoal border-y border-gold/30">
         <div className="max-w-2xl mx-auto px-4 text-center">
           <h2 className="font-display text-2xl font-bold text-foreground uppercase mb-4">
             Your Story, Perfectly Told

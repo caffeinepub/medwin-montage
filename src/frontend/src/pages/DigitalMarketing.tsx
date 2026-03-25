@@ -1,5 +1,6 @@
 import { BarChart2, Calendar, Megaphone, Target } from "lucide-react";
 import { motion } from "motion/react";
+import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
 
@@ -52,7 +53,9 @@ const areas = [
 
 export default function DigitalMarketing() {
   return (
-    <div>
+    <div className="relative">
+      <PageBackground src="/assets/generated/bg-digital-marketing.dim_1920x1080.jpg" />
+
       <PageHero
         title="Digital Marketing"
         subtitle="Data-driven marketing strategies to amplify your brand's digital presence"
@@ -72,7 +75,7 @@ export default function DigitalMarketing() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="bg-card border border-border rounded-sm p-8 gold-border card-cinematic"
+                  className="bg-black border border-gold/50 rounded-sm p-8 gold-border card-cinematic"
                   data-ocid={`marketing.item.${i + 1}`}
                 >
                   <div className="flex items-start gap-5">
@@ -107,7 +110,7 @@ export default function DigitalMarketing() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-gold/10 border-y border-gold/30">
+      <section className="py-16 bg-charcoal border-y border-gold/30">
         <div className="max-w-2xl mx-auto px-4 text-center">
           <h2 className="font-display text-2xl font-bold text-foreground uppercase mb-4">
             Ready to Grow Your Brand?

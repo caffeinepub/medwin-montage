@@ -1,5 +1,6 @@
 import { Star } from "lucide-react";
 import { motion } from "motion/react";
+import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
 import { useGetTestimonials } from "../hooks/useQueries";
@@ -74,7 +75,9 @@ export default function Testimonials() {
       : fallbackTestimonials;
 
   return (
-    <div>
+    <div className="relative">
+      <PageBackground src="/assets/generated/bg-testimonials.dim_1920x1080.jpg" />
+
       <PageHero
         title="Client Testimonials"
         subtitle="Stories of success from the brands we've helped grow"
@@ -96,12 +99,12 @@ export default function Testimonials() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.08 }}
-                className="p-6 bg-card border border-border/50 rounded-sm gold-border card-cinematic flex flex-col"
+                className="p-6 bg-black border border-gold/50 rounded-sm gold-border card-cinematic flex flex-col"
                 data-ocid={`testimonials.item.${i + 1}`}
               >
                 <StarRating rating={t.rating} />
                 <p className="mt-4 text-muted-foreground text-sm leading-relaxed flex-1 italic">
-                  “{t.review}”
+                  "{t.review}"
                 </p>
                 <div className="mt-6 pt-4 border-t border-border/40">
                   <p className="font-display text-sm font-semibold text-foreground uppercase tracking-wide">
@@ -116,7 +119,7 @@ export default function Testimonials() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-gold/10 border-y border-gold/30 text-center">
+      <section className="py-16 bg-charcoal border-y border-gold/30 text-center">
         <div className="max-w-2xl mx-auto px-4">
           <h2 className="font-display text-2xl font-bold text-foreground uppercase mb-4">
             Ready to Join Our Happy Clients?

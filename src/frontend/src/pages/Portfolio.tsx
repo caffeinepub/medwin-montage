@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Play } from "lucide-react";
 import { motion } from "motion/react";
+import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
 import { useGetPublishedVideos } from "../hooks/useQueries";
@@ -61,7 +62,9 @@ export default function Portfolio() {
     backendVideos && backendVideos.length > 0 ? backendVideos : FALLBACK_VIDEOS;
 
   return (
-    <div>
+    <div className="relative">
+      <PageBackground src="/assets/generated/bg-portfolio.dim_1920x1080.jpg" />
+
       <PageHero
         title="Portfolio"
         subtitle="Real work. Real results. Watch our projects in action."
@@ -74,7 +77,7 @@ export default function Portfolio() {
 
           <Tabs defaultValue="reels" className="mt-12">
             <TabsList
-              className="bg-card border border-border mb-10 flex-wrap h-auto gap-1 p-1"
+              className="bg-black border border-gold/50 mb-10 flex-wrap h-auto gap-1 p-1"
               data-ocid="portfolio.tab"
             >
               {CATEGORIES.map((cat) => (
@@ -108,7 +111,7 @@ export default function Portfolio() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
-                    className="p-10 bg-card border border-gold/30 rounded-sm gold-border flex flex-col items-center text-center gap-6"
+                    className="p-10 bg-black border border-gold/30 rounded-sm gold-border flex flex-col items-center text-center gap-6"
                     data-ocid="portfolio.item.1"
                   >
                     <div className="w-16 h-16 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center">
@@ -146,7 +149,7 @@ export default function Portfolio() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-gold/10 border-y border-gold/30 text-center">
+      <section className="py-16 bg-charcoal border-y border-gold/30 text-center">
         <div className="max-w-2xl mx-auto px-4">
           <h2 className="font-display text-2xl font-bold text-foreground uppercase mb-4">
             Want to be our next project?

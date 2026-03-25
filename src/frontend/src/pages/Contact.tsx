@@ -12,6 +12,7 @@ import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
 import { useGetFAQs, useSubmitContactForm } from "../hooks/useQueries";
@@ -70,25 +71,30 @@ export default function Contact() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const waMsg = `Hi Medwin Montage!\n\nName: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}${selectedPlan ? `\n\nSelected Plan: ${selectedPlan}` : ""}\n\nMessage: ${form.message}`;
+
+    // Always open WhatsApp first
+    window.open(
+      `https://wa.me/919487897160?text=${encodeURIComponent(waMsg)}`,
+      "_blank",
+    );
+
+    // Try to save to backend (non-blocking)
     try {
       await submit.mutateAsync({ ...form, selectedPlan });
-      const waMsg = `Hi Medwin Montage!\n\nName: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}${selectedPlan ? `\n\nSelected Plan: ${selectedPlan}` : ""}\n\nMessage: ${form.message}`;
-      window.open(
-        `https://wa.me/919487897160?text=${encodeURIComponent(waMsg)}`,
-        "_blank",
-      );
-      toast.success("Message sent! Redirecting to WhatsApp...");
-      setForm({ name: "", email: "", phone: "", message: "" });
-      setSelectedPlan("");
     } catch {
-      toast.error(
-        "Failed to send message. Please try again or contact us directly on WhatsApp.",
-      );
+      // Backend save failed, but WhatsApp was already opened — that's fine
     }
+
+    toast.success("Message sent! Redirecting to WhatsApp...");
+    setForm({ name: "", email: "", phone: "", message: "" });
+    setSelectedPlan("");
   };
 
   return (
-    <div>
+    <div className="relative">
+      <PageBackground src="/assets/generated/bg-contact.dim_1920x1080.jpg" />
+
       <PageHero
         title="Get In Touch"
         subtitle="Let's create something cinematic together — reach out via WhatsApp or Email"
@@ -110,7 +116,7 @@ export default function Contact() {
                   href="https://wa.me/919487897160"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-5 p-6 bg-card border border-gold/30 rounded-sm gold-border card-cinematic group"
+                  className="flex items-center gap-5 p-6 bg-black border border-gold/30 rounded-sm gold-border card-cinematic group"
                   data-ocid="contact.primary_button"
                 >
                   <div className="p-3 bg-gold/10 rounded-sm">
@@ -131,7 +137,7 @@ export default function Contact() {
 
                 <a
                   href="mailto:medwinmontage@gmail.com"
-                  className="flex items-center gap-5 p-6 bg-card border border-border rounded-sm gold-border card-cinematic"
+                  className="flex items-center gap-5 p-6 bg-black border border-gold/50 rounded-sm gold-border card-cinematic"
                   data-ocid="contact.secondary_button"
                 >
                   <div className="p-3 bg-gold/10 rounded-sm">
@@ -150,7 +156,7 @@ export default function Contact() {
                   </div>
                 </a>
 
-                <div className="flex items-center gap-5 p-6 bg-card border border-border rounded-sm">
+                <div className="flex items-center gap-5 p-6 bg-black border border-gold/50 rounded-sm">
                   <div className="p-3 bg-gold/10 rounded-sm">
                     <Phone className="w-6 h-6 text-gold" />
                   </div>
@@ -164,7 +170,7 @@ export default function Contact() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-5 p-6 bg-card border border-border rounded-sm">
+                <div className="flex items-center gap-5 p-6 bg-black border border-gold/50 rounded-sm">
                   <div className="p-3 bg-gold/10 rounded-sm">
                     <MapPin className="w-6 h-6 text-gold" />
                   </div>
@@ -238,7 +244,7 @@ export default function Contact() {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-8 p-4 bg-gold/10 border border-gold/40 rounded-sm text-center"
+                  className="mt-8 p-4 bg-charcoal border border-gold/40 rounded-sm text-center"
                   data-ocid="contact.panel"
                 >
                   <p className="text-gold text-sm font-semibold uppercase tracking-wide">
@@ -251,7 +257,7 @@ export default function Contact() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 onSubmit={handleSubmit}
-                className="mt-8 space-y-5 bg-card border border-border/50 rounded-sm p-8"
+                className="mt-8 space-y-5 bg-black border border-gold/50 rounded-sm p-8"
                 data-ocid="contact.modal"
               >
                 <div className="grid sm:grid-cols-2 gap-4">
@@ -319,11 +325,10 @@ export default function Contact() {
                 </div>
                 <Button
                   type="submit"
-                  disabled={submit.isPending}
                   className="w-full bg-gold text-primary-foreground hover:bg-gold-light uppercase tracking-widest text-sm py-5 rounded-sm"
                   data-ocid="contact.submit_button"
                 >
-                  {submit.isPending ? "Sending..." : "Send Message"}
+                  Send Message
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">
                   After sending, you'll be redirected to{" "}
@@ -345,7 +350,7 @@ export default function Contact() {
               <AccordionItem
                 key={"question" in faq ? faq.question : String(i)}
                 value={String(i)}
-                className="border border-border/50 rounded-sm px-5 gold-border"
+                className="border border-gold/50 rounded-sm px-5 gold-border"
                 data-ocid={`faq.item.${i + 1}`}
               >
                 <AccordionTrigger className="font-sans-ui text-sm text-foreground hover:text-gold transition-colors text-left py-5">

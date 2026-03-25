@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
+import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
 
@@ -27,10 +28,10 @@ const services = [
   {
     icon: Camera,
     title: "Cinematic Shooting",
-    desc: "On-location or studio cinematography using professional Sony A7 III, drone, and gimbal stabilizer for breathtaking visuals.",
+    desc: "On-location or studio cinematography using professional camera, drone, and gimbal stabilizer for breathtaking visuals.",
     features: [
-      "Sony A7 III & lens kit",
-      "DJI drone aerials",
+      "Professional camera kit",
+      "Drone aerial footage",
       "Gimbal stabilized shots",
       "Studio & location shoots",
     ],
@@ -95,7 +96,9 @@ export default function Services() {
   const total = Math.round(videoCount[0] * baseRate * discount);
 
   return (
-    <div>
+    <div className="relative">
+      <PageBackground src="/assets/generated/bg-services.dim_1920x1080.jpg" />
+
       <PageHero
         title="Our Services"
         subtitle="End-to-end creative production services tailored to your brand's needs"
@@ -116,7 +119,7 @@ export default function Services() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: i * 0.08 }}
-                  className="bg-card border border-border rounded-sm p-8 gold-border card-cinematic"
+                  className="bg-black border border-gold/50 rounded-sm p-8 gold-border card-cinematic"
                   data-ocid={`services.item.${i + 1}`}
                 >
                   <Icon className="w-10 h-10 text-gold mb-5" />
@@ -168,7 +171,7 @@ export default function Services() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="text-center p-8 bg-card border border-gold/30 rounded-sm"
+                className="text-center p-8 bg-black border border-gold/30 rounded-sm"
               >
                 <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">
                   {item.label}
@@ -186,7 +189,7 @@ export default function Services() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mt-12 p-8 bg-card border border-gold/30 rounded-sm"
+            className="mt-12 p-8 bg-black border border-gold/30 rounded-sm"
           >
             <h3 className="font-display text-xl font-bold text-foreground uppercase tracking-wide mb-6 text-center">
               Monthly Package Calculator

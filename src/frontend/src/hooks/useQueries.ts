@@ -117,7 +117,7 @@ export function useDeleteVideo() {
   return useMutation({
     mutationFn: async (id: bigint) => {
       if (!actor) throw new Error("Not connected");
-      return (actor as any).deletePortfolioVideo(id);
+      return actor.deletePortfolioVideo(id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["videos"] }),
   });
@@ -144,7 +144,7 @@ export function useGetAllBrands() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        return await actor.getPublishedBrands();
+        return await actor.getAllBrands();
       } catch {
         return [];
       }
@@ -195,7 +195,7 @@ export function useDeleteBrand() {
   return useMutation({
     mutationFn: async (id: bigint) => {
       if (!actor) throw new Error("Not connected");
-      return (actor as any).deleteBrandPartner(id);
+      return actor.deleteBrandPartner(id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["brands"] }),
   });
@@ -222,7 +222,7 @@ export function useGetAllServices() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        return await actor.getPublishedServices();
+        return await actor.getAllServices();
       } catch {
         return [];
       }
@@ -288,7 +288,7 @@ export function useGetAllPricingPlans() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        return await actor.getPublishedPricingPlans();
+        return await actor.getAllPricingPlans();
       } catch {
         return [];
       }
@@ -345,7 +345,7 @@ export function useGetPresetPackages() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        return await (actor as any).getPresetPackages();
+        return await actor.getPresetPackages();
       } catch {
         return [];
       }
@@ -361,7 +361,7 @@ export function useGetAllPresetPackages() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        return await (actor as any).getAllPresetPackages();
+        return await actor.getAllPresetPackages();
       } catch {
         return [];
       }
@@ -376,7 +376,7 @@ export function useUpdatePresetPackage() {
   return useMutation({
     mutationFn: async (pkg: PresetPackage) => {
       if (!actor) throw new Error("Not connected");
-      return (actor as any).updatePresetPackage(pkg);
+      return actor.updatePresetPackage(pkg);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["preset-packages"] }),
   });
@@ -391,7 +391,7 @@ export function useGetReelPricing() {
     queryFn: async () => {
       if (!actor) return null;
       try {
-        return await (actor as any).getReelPricing();
+        return await actor.getReelPricing();
       } catch {
         return null;
       }
@@ -406,7 +406,7 @@ export function useUpdateReelPricing() {
   return useMutation({
     mutationFn: async (pricing: ReelPricing) => {
       if (!actor) throw new Error("Not connected");
-      return (actor as any).updateReelPricing(pricing);
+      return actor.updateReelPricing(pricing);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["reel-pricing"] }),
   });
@@ -421,7 +421,7 @@ export function useGetMonthlyPackage() {
     queryFn: async () => {
       if (!actor) return null;
       try {
-        return await (actor as any).getMonthlyPackage();
+        return await actor.getMonthlyPackage();
       } catch {
         return null;
       }
@@ -436,7 +436,7 @@ export function useUpdateMonthlyPackage() {
   return useMutation({
     mutationFn: async (pkg: MonthlyPackage) => {
       if (!actor) throw new Error("Not connected");
-      return (actor as any).updateMonthlyPackage(pkg);
+      return actor.updateMonthlyPackage(pkg);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["monthly-package"] }),
   });
@@ -451,7 +451,7 @@ export function useGetSliderRates() {
     queryFn: async () => {
       if (!actor) return null;
       try {
-        return await (actor as any).getSliderRates();
+        return await actor.getSliderRates();
       } catch {
         return null;
       }
@@ -466,7 +466,7 @@ export function useUpdateSliderRates() {
   return useMutation({
     mutationFn: async (rates: SliderRates) => {
       if (!actor) throw new Error("Not connected");
-      return (actor as any).updateSliderRates(rates);
+      return actor.updateSliderRates(rates);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["slider-rates"] }),
   });
@@ -481,7 +481,7 @@ export function useGetSiteStats() {
     queryFn: async () => {
       if (!actor) return null;
       try {
-        return await (actor as any).getSiteStats();
+        return await actor.getSiteStats();
       } catch {
         return null;
       }
@@ -496,7 +496,7 @@ export function useUpdateSiteStats() {
   return useMutation({
     mutationFn: async (stats: SiteStats) => {
       if (!actor) throw new Error("Not connected");
-      return (actor as any).updateSiteStats(stats);
+      return actor.updateSiteStats(stats);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["site-stats"] }),
   });
@@ -511,8 +511,8 @@ export function useGetPageContent(pageId: string) {
     queryFn: async () => {
       if (!actor) return null;
       try {
-        const result = await (actor as any).getPageContent(pageId);
-        return result.length > 0 ? result[0] : null;
+        const result = await actor.getPageContent(pageId);
+        return result ?? null;
       } catch {
         return null;
       }
@@ -528,7 +528,7 @@ export function useGetAllPageContent() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        return await (actor as any).getAllPageContent();
+        return await actor.getAllPageContent();
       } catch {
         return [];
       }
@@ -546,7 +546,7 @@ export function useUpdatePageContent() {
       content,
     }: { pageId: string; content: PageContent }) => {
       if (!actor) throw new Error("Not connected");
-      return (actor as any).updatePageContent(pageId, content);
+      return actor.updatePageContent(pageId, content);
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["page-content", vars.pageId] });
@@ -561,7 +561,7 @@ export function useSeedPageContent() {
   return useMutation({
     mutationFn: async () => {
       if (!actor) throw new Error("Not connected");
-      return (actor as any).seedPageContent();
+      return actor.seedPageContent();
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["page-content"] }),
   });
@@ -592,7 +592,7 @@ export function useGetAllTestimonials() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        return await actor.getPublishedTestimonials();
+        return await actor.getAllTestimonials();
       } catch {
         return [];
       }
@@ -631,7 +631,7 @@ export function useDeleteTestimonial() {
   return useMutation({
     mutationFn: async (id: bigint) => {
       if (!actor) throw new Error("Not connected");
-      return (actor as any).deleteTestimonial(id);
+      return actor.deleteTestimonial(id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["testimonials"] }),
   });
@@ -662,7 +662,7 @@ export function useGetAllFAQs() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        return await actor.getPublishedFAQs();
+        return await actor.getAllFAQs();
       } catch {
         return [];
       }
@@ -701,7 +701,7 @@ export function useDeleteFAQ() {
   return useMutation({
     mutationFn: async (id: bigint) => {
       if (!actor) throw new Error("Not connected");
-      return (actor as any).deleteFAQItem(id);
+      return actor.deleteFAQItem(id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["faqs"] }),
   });
