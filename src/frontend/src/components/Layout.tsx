@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Film, Menu, X } from "lucide-react";
+import { Film, Menu, Shield, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type ReactNode, useEffect, useState } from "react";
 
@@ -7,7 +7,6 @@ const navLinks = [
   { label: "Home", to: "/" },
   { label: "About", to: "/about" },
   { label: "Portfolio", to: "/portfolio" },
-  { label: "Sample Projects", to: "/sample-projects" },
   { label: "Services", to: "/services" },
   { label: "Digital Marketing", to: "/digital-marketing" },
   { label: "Content Writing", to: "/content-writing" },
@@ -22,19 +21,17 @@ export default function Layout({ children }: { children: ReactNode }) {
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: currentPath intentionally triggers the effect
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+    setMobileOpen(false);
+  }, [currentPath]);
+
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handler);
     return () => window.removeEventListener("scroll", handler);
   }, []);
-
-  // Close mobile menu on route change
-  const prevPath = useState(currentPath)[0];
-  useEffect(() => {
-    if (prevPath !== currentPath) {
-      setMobileOpen(false);
-    }
-  });
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -85,7 +82,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             className="hidden lg:inline-flex items-center gap-2 bg-gold text-primary-foreground px-4 py-2 text-xs font-semibold uppercase tracking-widest transition-all hover:bg-gold-light gold-shimmer rounded-sm"
             data-ocid="nav.primary_button"
           >
-            Let’s Talk
+            Let's Talk
           </a>
 
           <button
@@ -110,36 +107,33 @@ export default function Layout({ children }: { children: ReactNode }) {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.25 }}
-              className="lg:hidden bg-charcoal border-t border-border overflow-hidden"
+              className="lg:hidden bg-charcoal border-t border-border"
             >
-              <ul className="px-4 py-4 space-y-1">
+              <div className="px-4 py-4 flex flex-col gap-3">
                 {navLinks.map((link) => (
-                  <li key={link.to}>
-                    <Link
-                      to={link.to}
-                      className={`block py-3 px-2 text-sm uppercase tracking-widest border-b border-border/40 transition-colors ${
-                        currentPath === link.to
-                          ? "text-gold"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                      data-ocid="nav.link"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-                <li className="pt-4">
-                  <a
-                    href="https://wa.me/919487897160"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block w-full text-center bg-gold text-primary-foreground py-3 text-xs font-semibold uppercase tracking-widest rounded-sm"
-                    data-ocid="nav.primary_button"
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={`font-sans-ui text-sm uppercase tracking-widest py-2 border-b border-border/30 ${
+                      currentPath === link.to
+                        ? "text-gold"
+                        : "text-muted-foreground"
+                    }`}
+                    data-ocid="nav.link"
                   >
-                    Let’s Talk
-                  </a>
-                </li>
-              </ul>
+                    {link.label}
+                  </Link>
+                ))}
+                <a
+                  href="https://wa.me/919487897160"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center justify-center gap-2 bg-gold text-primary-foreground px-4 py-3 text-xs font-semibold uppercase tracking-widest rounded-sm"
+                  data-ocid="nav.primary_button"
+                >
+                  Let's Talk
+                </a>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -147,62 +141,31 @@ export default function Layout({ children }: { children: ReactNode }) {
 
       <main className="flex-1 pt-16 lg:pt-20">{children}</main>
 
-      <footer className="bg-charcoal border-t border-border wave-bg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div className="md:col-span-1">
+      <footer className="bg-charcoal border-t border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+          <div className="grid md:grid-cols-3 gap-8 mb-10">
+            <div>
               <div className="flex items-center gap-2 mb-4">
                 <Film className="w-5 h-5 text-gold" />
-                <div>
-                  <div className="font-display text-base font-bold text-gold tracking-widest uppercase">
-                    Medwin
-                  </div>
-                  <div className="font-display text-base font-bold text-foreground tracking-widest uppercase">
-                    Montage
-                  </div>
-                </div>
+                <span className="font-display text-lg font-bold text-gold tracking-widest uppercase">
+                  Medwin Montage
+                </span>
               </div>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Turning Ideas Into Cinematic Stories. Create. Capture. Convert.
+                Creative studio specializing in video editing, cinematography,
+                and digital marketing. Based in Thanjavur, Tamil Nadu.
               </p>
             </div>
-
             <div>
-              <h4 className="text-xs uppercase tracking-widest text-gold mb-4">
-                Services
+              <h4 className="font-display text-sm font-bold text-foreground uppercase tracking-widest mb-4">
+                Quick Links
               </h4>
               <ul className="space-y-2">
-                {[
-                  "Video Editing",
-                  "Cinematography",
-                  "Content Creation",
-                  "Digital Marketing",
-                  "Script Writing",
-                ].map((s) => (
-                  <li key={s}>
-                    <Link
-                      to="/services"
-                      className="text-sm text-muted-foreground hover:text-gold transition-colors"
-                      data-ocid="nav.link"
-                    >
-                      {s}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-xs uppercase tracking-widest text-gold mb-4">
-                Pages
-              </h4>
-              <ul className="space-y-2">
-                {navLinks.map((l) => (
+                {navLinks.slice(0, 5).map((l) => (
                   <li key={l.to}>
                     <Link
                       to={l.to}
-                      className="text-sm text-muted-foreground hover:text-gold transition-colors"
-                      data-ocid="nav.link"
+                      className="text-muted-foreground text-sm hover:text-gold transition-colors"
                     >
                       {l.label}
                     </Link>
@@ -210,60 +173,46 @@ export default function Layout({ children }: { children: ReactNode }) {
                 ))}
               </ul>
             </div>
-
             <div>
-              <h4 className="text-xs uppercase tracking-widest text-gold mb-4">
+              <h4 className="font-display text-sm font-bold text-foreground uppercase tracking-widest mb-4">
                 Contact
               </h4>
-              <div className="space-y-3">
-                <a
-                  href="mailto:medwinmontage@gmail.com"
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-gold transition-colors"
-                >
-                  <span>✉</span> medwinmontage@gmail.com
-                </a>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>medwinmontage@gmail.com</p>
+                <p>+91 9487897160</p>
+                <p>Thanjavur, Tamil Nadu, India</p>
                 <a
                   href="https://wa.me/919487897160"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-gold transition-colors"
+                  className="inline-block mt-2 text-gold hover:underline"
                 >
-                  <span>📱</span> +91 9487897160
+                  WhatsApp Us
                 </a>
-                <p className="text-sm text-muted-foreground">
-                  📍 Thanjavur, Tamil Nadu, India
-                </p>
               </div>
             </div>
           </div>
-
-          <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} Medwin Montage. All rights reserved.
+          <div className="border-t border-border/30 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-muted-foreground text-xs">
+              &copy; {new Date().getFullYear()} Medwin Montage. All rights
+              reserved.
             </p>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <Link
                 to="/admin"
-                className="text-xs text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                className="flex items-center gap-1.5 text-muted-foreground/50 hover:text-gold transition-colors text-xs"
                 data-ocid="nav.link"
               >
-                Admin
+                <Shield className="w-3 h-3" /> Admin Panel
               </Link>
-              <p className="text-xs text-muted-foreground">
-                Built with ❤ using{" "}
-                <a
-                  href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
-                    typeof window !== "undefined"
-                      ? window.location.hostname
-                      : "",
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gold hover:underline"
-                >
-                  caffeine.ai
-                </a>
-              </p>
+              <a
+                href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground/50 hover:text-muted-foreground text-xs transition-colors"
+              >
+                Built with ♥ using caffeine.ai
+              </a>
             </div>
           </div>
         </div>

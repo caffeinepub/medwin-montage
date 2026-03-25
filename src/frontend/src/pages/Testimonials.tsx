@@ -56,8 +56,10 @@ function StarRating({ rating }: { rating: bigint }) {
     <div className="flex gap-1">
       {starIndices.map((i) => (
         <Star
-          key={i}
-          className={`w-4 h-4 ${i < Number(rating) ? "text-gold fill-gold" : "text-border"}`}
+          key={String(i)}
+          className={`w-4 h-4 ${
+            i < Number(rating) ? "text-gold fill-gold" : "text-border"
+          }`}
         />
       ))}
     </div>
@@ -81,24 +83,28 @@ export default function Testimonials() {
 
       <section className="py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <SectionTitle accent="Reviews" title="What Clients Say" />
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
+          <SectionTitle
+            accent="Reviews"
+            title="What Our Clients Say"
+            subtitle="Real feedback from real brands we've partnered with"
+          />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
             {testimonials.map((t, i) => (
               <motion.div
-                key={t.clientName}
+                key={`${t.clientName}-${t.company}`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.08 }}
-                className="bg-card border border-border rounded-sm p-8 gold-border card-cinematic flex flex-col"
+                className="p-6 bg-card border border-border/50 rounded-sm gold-border card-cinematic flex flex-col"
                 data-ocid={`testimonials.item.${i + 1}`}
               >
                 <StarRating rating={t.rating} />
-                <p className="mt-5 text-sm text-muted-foreground leading-relaxed flex-1 italic">
-                  &ldquo;{t.review}&rdquo;
+                <p className="mt-4 text-muted-foreground text-sm leading-relaxed flex-1 italic">
+                  “{t.review}”
                 </p>
-                <div className="mt-6 pt-6 border-t border-border">
-                  <p className="font-semibold text-foreground text-sm">
+                <div className="mt-6 pt-4 border-t border-border/40">
+                  <p className="font-display text-sm font-semibold text-foreground uppercase tracking-wide">
                     {t.clientName}
                   </p>
                   <p className="text-xs text-gold mt-0.5">{t.company}</p>
@@ -109,32 +115,24 @@ export default function Testimonials() {
         </div>
       </section>
 
-      <section className="py-16 bg-charcoal-light">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <SectionTitle accent="Impact" title="Success Stories" />
-          <div className="grid sm:grid-cols-3 gap-8 mt-12">
-            {[
-              { metric: "500+", label: "Videos Delivered" },
-              { metric: "50+", label: "Happy Clients" },
-              { metric: "10M+", label: "Views Generated" },
-            ].map((s, i) => (
-              <motion.div
-                key={s.label}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="text-center p-12 border border-gold/30 rounded-sm gold-border"
-              >
-                <p className="font-display text-5xl font-bold text-gold mb-2">
-                  {s.metric}
-                </p>
-                <p className="text-sm text-muted-foreground uppercase tracking-widest">
-                  {s.label}
-                </p>
-              </motion.div>
-            ))}
-          </div>
+      {/* CTA */}
+      <section className="py-16 bg-gold/10 border-y border-gold/30 text-center">
+        <div className="max-w-2xl mx-auto px-4">
+          <h2 className="font-display text-2xl font-bold text-foreground uppercase mb-4">
+            Ready to Join Our Happy Clients?
+          </h2>
+          <p className="text-muted-foreground mb-8">
+            Let's create content that speaks for itself.
+          </p>
+          <a
+            href="https://wa.me/919487897160"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-gold text-primary-foreground px-8 py-4 text-sm font-semibold uppercase tracking-widest hover:bg-gold-light transition-all rounded-sm"
+            data-ocid="testimonials.primary_button"
+          >
+            Start Your Project
+          </a>
         </div>
       </section>
     </div>

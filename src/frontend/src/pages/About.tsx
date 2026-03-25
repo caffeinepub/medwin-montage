@@ -1,4 +1,4 @@
-import { Award, Camera, CheckCircle, Cpu, Users } from "lucide-react";
+import { Award, Camera, CheckCircle, Users } from "lucide-react";
 import { motion } from "motion/react";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
@@ -11,29 +11,6 @@ const skills = [
   { label: "Social Media", level: 92 },
   { label: "Digital Marketing", level: 85 },
   { label: "Script Writing", level: 82 },
-];
-
-const gear = [
-  {
-    cat: "Camera Gear",
-    items: [
-      "Sony A7 III",
-      "DJI Drone",
-      "Gimbal Stabilizer",
-      "Studio Lighting Kit",
-      "DJI Action Camera",
-    ],
-  },
-  {
-    cat: "Editing Software",
-    items: [
-      "Adobe Premiere Pro",
-      "After Effects",
-      "DaVinci Resolve",
-      "Adobe Photoshop",
-      "Canva Pro",
-    ],
-  },
 ];
 
 const usps = [
@@ -53,10 +30,18 @@ const usps = [
     desc: "Your vision leads the process. Revisions until you're 100% satisfied.",
   },
   {
-    icon: Cpu,
-    title: "Latest Technology",
-    desc: "Professional-grade equipment and industry-leading software.",
+    icon: CheckCircle,
+    title: "On-Time Delivery",
+    desc: "Consistent, reliable turnaround. Your deadlines are our deadlines.",
   },
+];
+
+const milestones = [
+  { year: "2020", event: "Founded Medwin Montage in Thanjavur" },
+  { year: "2021", event: "First 10 client brands onboarded" },
+  { year: "2022", event: "Expanded to full cinematography services" },
+  { year: "2023", event: "1M+ views generated for clients" },
+  { year: "2024", event: "3M+ views, 15+ happy clients" },
 ];
 
 export default function About() {
@@ -68,7 +53,7 @@ export default function About() {
         accent="Who We Are"
       />
 
-      {/* Who I Am + Journey */}
+      {/* Who I Am */}
       <section className="py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid md:grid-cols-2 gap-16 items-center">
@@ -132,8 +117,42 @@ export default function About() {
         </div>
       </section>
 
-      {/* Skills */}
+      {/* Journey / Timeline */}
       <section className="py-24 bg-charcoal-light">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <SectionTitle accent="Timeline" title="The Journey" />
+          <div className="mt-12 space-y-0">
+            {milestones.map((m, i) => (
+              <motion.div
+                key={m.year}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
+                className="flex gap-6 items-start pb-8 relative"
+              >
+                <div className="flex-shrink-0 w-16 text-right">
+                  <span className="font-display text-gold font-bold text-lg">
+                    {m.year}
+                  </span>
+                </div>
+                <div className="flex-shrink-0 flex flex-col items-center">
+                  <div className="w-3 h-3 rounded-full bg-gold mt-1.5" />
+                  {i < milestones.length - 1 && (
+                    <div className="w-px flex-1 bg-gold/30 mt-1 min-h-[2rem]" />
+                  )}
+                </div>
+                <p className="text-muted-foreground leading-relaxed pt-0.5">
+                  {m.event}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Skills */}
+      <section className="py-24 bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <SectionTitle accent="Expertise" title="Skills & Mastery" />
           <div className="space-y-6 mt-12">
@@ -149,21 +168,25 @@ export default function About() {
                   <span className="text-sm font-semibold text-foreground uppercase tracking-wide font-sans-ui">
                     {skill.label}
                   </span>
-                  <span className="text-sm text-gold font-mono">
+                  <span className="text-gold text-sm font-bold">
                     {skill.level}%
                   </span>
                 </div>
-                <div className="h-1.5 bg-charcoal rounded-full overflow-hidden">
+                <div className="h-1.5 bg-border rounded-full overflow-hidden">
                   <motion.div
+                    style={{
+                      backgroundColor:
+                        skill.level <= 60
+                          ? "#b45309"
+                          : skill.level <= 80
+                            ? "#d97706"
+                            : "#f59e0b",
+                    }}
+                    className="h-full rounded-full"
                     initial={{ width: 0 }}
                     whileInView={{ width: `${skill.level}%` }}
                     viewport={{ once: true }}
-                    transition={{
-                      duration: 0.8,
-                      delay: i * 0.08 + 0.2,
-                      ease: "easeOut",
-                    }}
-                    className="h-full bg-gradient-to-r from-gold-dark to-gold-light rounded-full"
+                    transition={{ duration: 0.8, delay: i * 0.05 + 0.2 }}
                   />
                 </div>
               </motion.div>
@@ -172,45 +195,11 @@ export default function About() {
         </div>
       </section>
 
-      {/* Gear */}
-      <section className="py-24 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <SectionTitle accent="Equipment" title="Gear I Use" />
-          <div className="grid md:grid-cols-2 gap-8 mt-12">
-            {gear.map((g, i) => (
-              <motion.div
-                key={g.cat}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="bg-card border border-border rounded-sm p-8 gold-border"
-              >
-                <h3 className="font-display text-lg font-bold text-gold uppercase tracking-widest mb-6">
-                  {g.cat}
-                </h3>
-                <ul className="space-y-3">
-                  {g.items.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-center gap-3 text-muted-foreground"
-                    >
-                      <CheckCircle className="w-4 h-4 text-gold flex-shrink-0" />
-                      <span className="text-sm">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* WHY CHOOSE ME */}
+      {/* Why Choose Us */}
       <section className="py-24 bg-charcoal-light">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <SectionTitle accent="Why Us" title="Why Choose Medwin Montage" />
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
             {usps.map((usp, i) => {
               const Icon = usp.icon;
               return (
@@ -220,19 +209,41 @@ export default function About() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: i * 0.1 }}
-                  className="p-8 bg-card border border-border rounded-sm gold-border card-cinematic text-center"
+                  className="p-6 bg-card border border-border/50 rounded-sm gold-border card-cinematic"
+                  data-ocid={`about.item.${i + 1}`}
                 >
-                  <Icon className="w-10 h-10 text-gold mx-auto mb-4" />
-                  <h3 className="font-display text-base font-bold text-foreground uppercase tracking-wide mb-3">
+                  <Icon className="w-8 h-8 text-gold mb-4" />
+                  <h3 className="font-display text-base font-bold text-foreground uppercase tracking-wide mb-2">
                     {usp.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     {usp.desc}
                   </p>
                 </motion.div>
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-16 bg-gold/10 border-y border-gold/30 text-center">
+        <div className="max-w-2xl mx-auto px-4">
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground uppercase mb-4">
+            Ready to Tell Your Story?
+          </h2>
+          <p className="text-muted-foreground mb-8">
+            Let's create something unforgettable together.
+          </p>
+          <a
+            href="https://wa.me/919487897160"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-gold text-primary-foreground px-8 py-4 text-sm font-semibold uppercase tracking-widest hover:bg-gold-light transition-all rounded-sm"
+            data-ocid="about.primary_button"
+          >
+            Get In Touch
+          </a>
         </div>
       </section>
     </div>

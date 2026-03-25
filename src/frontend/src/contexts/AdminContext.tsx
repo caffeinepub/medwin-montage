@@ -1,11 +1,12 @@
 import { type ReactNode, createContext, useContext, useState } from "react";
 
-const ADMIN_PASSWORD = "medwin@admin2024";
+const ADMIN_USERNAME = "medwinmontageadmin";
+const ADMIN_PASSWORD = "medwinmontage210510";
 const STORAGE_KEY = "adminAuthenticated";
 
 interface AdminContextType {
   isAdmin: boolean;
-  login: (password: string) => boolean;
+  login: (username: string, password: string) => boolean;
   logout: () => void;
 }
 
@@ -20,8 +21,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     () => sessionStorage.getItem(STORAGE_KEY) === "true",
   );
 
-  const login = (password: string) => {
-    if (password === ADMIN_PASSWORD) {
+  const login = (username: string, password: string) => {
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       sessionStorage.setItem(STORAGE_KEY, "true");
       setIsAdmin(true);
       return true;

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
@@ -56,22 +56,34 @@ export default function Contact() {
     phone: "",
     message: "",
   });
+  const [selectedPlan, setSelectedPlan] = useState("");
   const submit = useSubmitContactForm();
   const { data: backendFAQs } = useGetFAQs();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get("plan");
+    if (plan) setSelectedPlan(plan);
+  }, []);
   const faqs =
     backendFAQs && backendFAQs.length > 0 ? backendFAQs : fallbackFAQs;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await submit.mutateAsync(form);
-      toast.success("Message sent! We'll get back to you within 24 hours.");
-      setForm({ name: "", email: "", phone: "", message: "" });
-    } catch {
-      const msg = encodeURIComponent(
-        `Hi Medwin Montage!\nName: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}\n\n${form.message}`,
+      await submit.mutateAsync({ ...form, selectedPlan });
+      const waMsg = `Hi Medwin Montage!\n\nName: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}${selectedPlan ? `\n\nSelected Plan: ${selectedPlan}` : ""}\n\nMessage: ${form.message}`;
+      window.open(
+        `https://wa.me/919487897160?text=${encodeURIComponent(waMsg)}`,
+        "_blank",
       );
-      window.open(`https://wa.me/919487897160?text=${msg}`, "_blank");
+      toast.success("Message sent! Redirecting to WhatsApp...");
+      setForm({ name: "", email: "", phone: "", message: "" });
+      setSelectedPlan("");
+    } catch {
+      toast.error(
+        "Failed to send message. Please try again or contact us directly on WhatsApp.",
+      );
     }
   };
 
@@ -86,6 +98,7 @@ export default function Contact() {
       <section className="py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid lg:grid-cols-2 gap-16">
+            {/* Left: Contact info + map */}
             <div>
               <SectionTitle
                 accent="Reach Us"
@@ -166,162 +179,179 @@ export default function Contact() {
                 </div>
               </div>
 
-              <div
-                className="mt-8 rounded-sm overflow-hidden border border-border"
-                style={{ height: 280 }}
+              {/* Static Map */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="mt-8 rounded-sm overflow-hidden border border-gold/30"
               >
-                <iframe
-                  src="https://maps.google.com/maps?q=10.0739,78.0675&z=15&output=embed"
-                  width="100%"
-                  height="100%"
-                  style={{
-                    border: 0,
-                    filter: "grayscale(80%) invert(90%) contrast(80%)",
-                  }}
-                  allowFullScreen
-                  loading="lazy"
-                  title="Location"
-                />
-              </div>
+                <a
+                  href="https://maps.app.goo.gl/KLb5gLXJ9gk5qKmQ8"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                  data-ocid="contact.map_marker"
+                >
+                  <div className="bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 h-56 flex flex-col items-center justify-center gap-4 relative overflow-hidden">
+                    <div className="absolute inset-0 opacity-20">
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border border-gold/30 rounded-full" />
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 border border-gold/20 rounded-full" />
+                      <div className="grid grid-cols-8 h-full opacity-30">
+                        {Array.from({ length: 32 }, (_, i) => (
+                          <div
+                            key={i.toString()}
+                            className="border-r border-gold/10 h-full"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="relative z-10 flex flex-col items-center gap-3">
+                      <div className="w-10 h-10 bg-gold rounded-full flex items-center justify-center shadow-gold-lg">
+                        <MapPin className="w-5 h-5 text-black" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-foreground font-semibold">
+                          Thanjavur, Tamil Nadu
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          India
+                        </p>
+                      </div>
+                      <span className="text-xs border border-gold/40 text-gold px-4 py-1.5 rounded-full uppercase tracking-widest">
+                        View on Google Maps →
+                      </span>
+                    </div>
+                  </div>
+                </a>
+              </motion.div>
             </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
+            {/* Right: Form */}
+            <div>
               <SectionTitle
-                accent="Message Us"
-                title="Send a Message"
+                accent="Send Message"
+                title="Drop Us a Line"
                 center={false}
               />
-              <form
+              {selectedPlan && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-8 p-4 bg-gold/10 border border-gold/40 rounded-sm text-center"
+                  data-ocid="contact.panel"
+                >
+                  <p className="text-gold text-sm font-semibold uppercase tracking-wide">
+                    Booking: {selectedPlan} Plan — Fill in your details below
+                  </p>
+                </motion.div>
+              )}
+              <motion.form
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
                 onSubmit={handleSubmit}
-                className="mt-8 space-y-5"
+                className="mt-8 space-y-5 bg-card border border-border/50 rounded-sm p-8"
                 data-ocid="contact.modal"
               >
-                <div>
-                  <Label
-                    htmlFor="name"
-                    className="text-xs uppercase tracking-widest text-muted-foreground mb-2 block"
-                  >
-                    Name *
-                  </Label>
-                  <Input
-                    id="name"
-                    required
-                    value={form.name}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, name: e.target.value }))
-                    }
-                    placeholder="Your full name"
-                    className="bg-card border-border focus:border-gold"
-                    data-ocid="contact.input"
-                  />
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                      Your Name *
+                    </Label>
+                    <Input
+                      required
+                      value={form.name}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, name: e.target.value }))
+                      }
+                      placeholder="Arjun Kumar"
+                      className="bg-background border-border focus:border-gold"
+                      data-ocid="contact.input"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                      Phone
+                    </Label>
+                    <Input
+                      value={form.phone}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, phone: e.target.value }))
+                      }
+                      placeholder="+91 9XXXXXXXXX"
+                      className="bg-background border-border focus:border-gold"
+                      data-ocid="contact.input"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <Label
-                    htmlFor="email"
-                    className="text-xs uppercase tracking-widest text-muted-foreground mb-2 block"
-                  >
+                  <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1.5 block">
                     Email *
                   </Label>
                   <Input
-                    id="email"
-                    type="email"
                     required
+                    type="email"
                     value={form.email}
                     onChange={(e) =>
                       setForm((p) => ({ ...p, email: e.target.value }))
                     }
-                    placeholder="your@email.com"
-                    className="bg-card border-border focus:border-gold"
+                    placeholder="you@example.com"
+                    className="bg-background border-border focus:border-gold"
                     data-ocid="contact.input"
                   />
                 </div>
                 <div>
-                  <Label
-                    htmlFor="phone"
-                    className="text-xs uppercase tracking-widest text-muted-foreground mb-2 block"
-                  >
-                    Phone
-                  </Label>
-                  <Input
-                    id="phone"
-                    value={form.phone}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, phone: e.target.value }))
-                    }
-                    placeholder="+91 XXXXX XXXXX"
-                    className="bg-card border-border focus:border-gold"
-                    data-ocid="contact.input"
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor="message"
-                    className="text-xs uppercase tracking-widest text-muted-foreground mb-2 block"
-                  >
+                  <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1.5 block">
                     Message *
                   </Label>
                   <Textarea
-                    id="message"
                     required
                     value={form.message}
                     onChange={(e) =>
                       setForm((p) => ({ ...p, message: e.target.value }))
                     }
                     placeholder="Tell us about your project..."
-                    className="bg-card border-border focus:border-gold min-h-32"
+                    rows={5}
+                    className="bg-background border-border focus:border-gold resize-none"
                     data-ocid="contact.textarea"
                   />
                 </div>
                 <Button
                   type="submit"
                   disabled={submit.isPending}
-                  className="w-full bg-gold text-primary-foreground hover:bg-gold-light uppercase tracking-widest text-sm py-6 rounded-sm"
+                  className="w-full bg-gold text-primary-foreground hover:bg-gold-light uppercase tracking-widest text-sm py-5 rounded-sm"
                   data-ocid="contact.submit_button"
                 >
                   {submit.isPending ? "Sending..." : "Send Message"}
                 </Button>
-                {submit.isSuccess && (
-                  <p
-                    className="text-green-400 text-sm text-center"
-                    data-ocid="contact.success_state"
-                  >
-                    Message sent successfully!
-                  </p>
-                )}
-                {submit.isError && (
-                  <p
-                    className="text-destructive text-sm text-center"
-                    data-ocid="contact.error_state"
-                  >
-                    Something went wrong. Opening WhatsApp instead...
-                  </p>
-                )}
-              </form>
-            </motion.div>
+                <p className="text-xs text-center text-muted-foreground">
+                  After sending, you'll be redirected to{" "}
+                  <span className="text-gold">WhatsApp</span> with your details
+                  pre-filled.
+                </p>
+              </motion.form>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* FAQs */}
       <section className="py-24 bg-charcoal-light">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <SectionTitle accent="Questions" title="FAQs" />
-          <Accordion type="single" collapsible className="mt-8 space-y-2">
+          <SectionTitle accent="FAQs" title="Frequently Asked Questions" />
+          <Accordion type="single" collapsible className="mt-12 space-y-3">
             {faqs.map((faq, i) => (
               <AccordionItem
-                key={faq.question}
-                value={`faq-${i}`}
-                className="bg-card border border-border rounded-sm px-6 data-[state=open]:border-gold/50"
+                key={"question" in faq ? faq.question : String(i)}
+                value={String(i)}
+                className="border border-border/50 rounded-sm px-5 gold-border"
                 data-ocid={`faq.item.${i + 1}`}
               >
-                <AccordionTrigger className="text-sm font-semibold text-foreground uppercase tracking-wide py-5 hover:no-underline hover:text-gold">
+                <AccordionTrigger className="font-sans-ui text-sm text-foreground hover:text-gold transition-colors text-left py-5">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-sm text-muted-foreground pb-5 leading-relaxed">
+                <AccordionContent className="text-muted-foreground text-sm pb-5">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>

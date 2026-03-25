@@ -7,6 +7,12 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
+export interface FAQItem {
+    id: bigint;
+    question: string;
+    published: boolean;
+    answer: string;
+}
 export interface VideoInput {
     title: string;
     vimeoId: string;
@@ -51,6 +57,7 @@ export interface ContactEnquiry {
     name: string;
     email: string;
     message: string;
+    selectedPlan?: string;
     timestamp: Time;
     phone: string;
 }
@@ -91,12 +98,6 @@ export interface BrandInput {
     category: string;
     location: string;
 }
-export interface FAQItem {
-    id: bigint;
-    question: string;
-    published: boolean;
-    answer: string;
-}
 export interface PricingPlanInput {
     planLabel: string;
     note: string;
@@ -118,6 +119,20 @@ export interface Testimonial {
     company: string;
     rating: bigint;
 }
+export interface PageSection {
+    id: string;
+    heading: string;
+    description: string;
+    imageUrl: string;
+    visible: boolean;
+}
+export interface PageContent {
+    pageId: string;
+    heroTitle: string;
+    heroSubtitle: string;
+    heroBackgroundImage: string;
+    sections: Array<PageSection>;
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -132,10 +147,12 @@ export interface backendInterface {
     addTestimonial(input: TestimonialFullInput): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     getAllContactEnquiries(): Promise<Array<ContactEnquiry>>;
+    getAllPageContent(): Promise<Array<[string, PageContent]>>;
     getAllVideos(): Promise<Array<PortfolioVideo>>;
     getBrandsByCategory(category: string): Promise<Array<Brand>>;
     getCallerUserRole(): Promise<UserRole>;
     getOfficeProfile(): Promise<OfficeProfile>;
+    getPageContent(pageId: string): Promise<PageContent | null>;
     getPublishedBrands(): Promise<Array<Brand>>;
     getPublishedFAQs(): Promise<Array<FAQItem>>;
     getPublishedPricingPlans(): Promise<Array<PricingPlan>>;
@@ -154,7 +171,8 @@ export interface backendInterface {
         videos: Array<PortfolioVideo>;
     }>;
     seedData(): Promise<void>;
-    submitContactEnquiry(name: string, email: string, phone: string, message: string): Promise<bigint>;
+    seedPageContent(): Promise<void>;
+    submitContactEnquiry(name: string, email: string, phone: string, message: string, selectedPlan: string): Promise<bigint>;
     toggleBrandPublished(brandId: bigint): Promise<boolean>;
     toggleFAQPublished(faqId: bigint): Promise<boolean>;
     togglePricingPublished(planId: bigint): Promise<boolean>;
@@ -163,6 +181,7 @@ export interface backendInterface {
     toggleVideoPublished(videoId: bigint): Promise<boolean>;
     updateBrandPartner(id: bigint, brand: BrandInput): Promise<void>;
     updateOfficeProfile(profile: OfficeProfile): Promise<void>;
+    updatePageContent(pageId: string, content: PageContent): Promise<void>;
     updatePortfolioVideo(video: PortfolioVideoFullInput): Promise<void>;
     updatePricingPlan(id: bigint, plan: PricingPlanInput): Promise<void>;
     updateService(service: ServiceFullInput): Promise<void>;

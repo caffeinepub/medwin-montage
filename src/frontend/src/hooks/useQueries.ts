@@ -3,6 +3,7 @@ import type {
   BrandInput,
   FAQInput,
   OfficeProfile,
+  PageContent,
   PortfolioVideoFullInput,
   PricingPlanInput,
   ServiceFullInput,
@@ -10,6 +11,38 @@ import type {
   TestimonialFullInput,
   VideoInput,
 } from "../backend.d";
+
+// Types not yet in backend.d.ts (from backend.did.d.ts)
+type PresetPackage = {
+  id: bigint;
+  name: string;
+  price: bigint;
+  features: string[];
+  deliveryDays: bigint;
+  enabled: boolean;
+};
+type ReelPricing = {
+  editingOnly: bigint;
+  editingCamera: bigint;
+  editingContentCamera: bigint;
+};
+type MonthlyPackage = {
+  price: bigint;
+  videoCount: bigint;
+  description: string;
+  enabled: boolean;
+};
+type SliderRates = {
+  editing: bigint;
+  videography: bigint;
+  content: bigint;
+  other: bigint;
+};
+type SiteStats = {
+  videosDelivered: bigint;
+  happyClients: bigint;
+  viewsGenerated: bigint;
+};
 import { useActor } from "./useActor";
 
 // ─── Videos ────────────────────────────────────────────────────────────────
@@ -73,6 +106,18 @@ export function useToggleVideoPublished() {
     mutationFn: async (id: bigint) => {
       if (!actor) throw new Error("Not connected");
       return actor.toggleVideoPublished(id);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["videos"] }),
+  });
+}
+
+export function useDeleteVideo() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: bigint) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).deletePortfolioVideo(id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["videos"] }),
   });
@@ -144,6 +189,18 @@ export function useToggleBrandPublished() {
   });
 }
 
+export function useDeleteBrand() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: bigint) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).deleteBrandPartner(id);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["brands"] }),
+  });
+}
+
 // ─── Services ──────────────────────────────────────────────────────────────
 
 export function useGetPublishedServices() {
@@ -164,7 +221,11 @@ export function useGetAllServices() {
     queryKey: ["services", "all"],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getPublishedServices();
+      try {
+        return await actor.getPublishedServices();
+      } catch {
+        return [];
+      }
     },
     enabled: !!actor && !isFetching,
   });
@@ -206,7 +267,7 @@ export function useToggleServicePublished() {
   });
 }
 
-// ─── Pricing ───────────────────────────────────────────────────────────────
+// ─── Pricing Plans ─────────────────────────────────────────────────────────
 
 export function useGetPublishedPricingPlans() {
   const { actor, isFetching } = useActor();
@@ -226,7 +287,11 @@ export function useGetAllPricingPlans() {
     queryKey: ["pricing", "all"],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getPublishedPricingPlans();
+      try {
+        return await actor.getPublishedPricingPlans();
+      } catch {
+        return [];
+      }
     },
     enabled: !!actor && !isFetching,
   });
@@ -271,7 +336,238 @@ export function useTogglePricingPublished() {
   });
 }
 
-// ─── Testimonials ──────────────────────────────────────────────────────────
+// ─── Preset Packages ──────────────────────────────────────────────────────
+
+export function useGetPresetPackages() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["preset-packages"],
+    queryFn: async () => {
+      if (!actor) return [];
+      try {
+        return await (actor as any).getPresetPackages();
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetAllPresetPackages() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["preset-packages", "all"],
+    queryFn: async () => {
+      if (!actor) return [];
+      try {
+        return await (actor as any).getAllPresetPackages();
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdatePresetPackage() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (pkg: PresetPackage) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updatePresetPackage(pkg);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["preset-packages"] }),
+  });
+}
+
+// ─── Reel Pricing ─────────────────────────────────────────────────────────
+
+export function useGetReelPricing() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["reel-pricing"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await (actor as any).getReelPricing();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateReelPricing() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (pricing: ReelPricing) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updateReelPricing(pricing);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["reel-pricing"] }),
+  });
+}
+
+// ─── Monthly Package ──────────────────────────────────────────────────────
+
+export function useGetMonthlyPackage() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["monthly-package"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await (actor as any).getMonthlyPackage();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateMonthlyPackage() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (pkg: MonthlyPackage) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updateMonthlyPackage(pkg);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["monthly-package"] }),
+  });
+}
+
+// ─── Slider Rates ─────────────────────────────────────────────────────────
+
+export function useGetSliderRates() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["slider-rates"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await (actor as any).getSliderRates();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateSliderRates() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rates: SliderRates) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updateSliderRates(rates);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["slider-rates"] }),
+  });
+}
+
+// ─── Site Stats ───────────────────────────────────────────────────────────
+
+export function useGetSiteStats() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["site-stats"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await (actor as any).getSiteStats();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateSiteStats() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (stats: SiteStats) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updateSiteStats(stats);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["site-stats"] }),
+  });
+}
+
+// ─── Page Content ─────────────────────────────────────────────────────────
+
+export function useGetPageContent(pageId: string) {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["page-content", pageId],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        const result = await (actor as any).getPageContent(pageId);
+        return result.length > 0 ? result[0] : null;
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetAllPageContent() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["page-content", "all"],
+    queryFn: async () => {
+      if (!actor) return [];
+      try {
+        return await (actor as any).getAllPageContent();
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdatePageContent() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      pageId,
+      content,
+    }: { pageId: string; content: PageContent }) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updatePageContent(pageId, content);
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ["page-content", vars.pageId] });
+      qc.invalidateQueries({ queryKey: ["page-content", "all"] });
+    },
+  });
+}
+
+export function useSeedPageContent() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).seedPageContent();
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["page-content"] }),
+  });
+}
+
+// ─── Testimonials ─────────────────────────────────────────────────────────
 
 export function useGetPublishedTestimonials() {
   const { actor, isFetching } = useActor();
@@ -285,7 +581,6 @@ export function useGetPublishedTestimonials() {
   });
 }
 
-// Keep for backward compat
 export function useGetTestimonials() {
   return useGetPublishedTestimonials();
 }
@@ -296,7 +591,11 @@ export function useGetAllTestimonials() {
     queryKey: ["testimonials", "all"],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getPublishedTestimonials();
+      try {
+        return await actor.getPublishedTestimonials();
+      } catch {
+        return [];
+      }
     },
     enabled: !!actor && !isFetching,
   });
@@ -306,9 +605,9 @@ export function useAddTestimonial() {
   const { actor } = useActor();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: TestimonialFullInput) => {
+    mutationFn: async (t: TestimonialFullInput) => {
       if (!actor) throw new Error("Not connected");
-      return actor.addTestimonial(input);
+      return actor.addTestimonial(t);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["testimonials"] }),
   });
@@ -326,7 +625,19 @@ export function useToggleTestimonialPublished() {
   });
 }
 
-// ─── FAQs ──────────────────────────────────────────────────────────────────
+export function useDeleteTestimonial() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: bigint) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).deleteTestimonial(id);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["testimonials"] }),
+  });
+}
+
+// ─── FAQs ─────────────────────────────────────────────────────────────────
 
 export function useGetPublishedFAQs() {
   const { actor, isFetching } = useActor();
@@ -340,7 +651,6 @@ export function useGetPublishedFAQs() {
   });
 }
 
-// Keep for backward compat
 export function useGetFAQs() {
   return useGetPublishedFAQs();
 }
@@ -351,7 +661,11 @@ export function useGetAllFAQs() {
     queryKey: ["faqs", "all"],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getPublishedFAQs();
+      try {
+        return await actor.getPublishedFAQs();
+      } catch {
+        return [];
+      }
     },
     enabled: !!actor && !isFetching,
   });
@@ -381,6 +695,18 @@ export function useToggleFAQPublished() {
   });
 }
 
+export function useDeleteFAQ() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: bigint) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).deleteFAQItem(id);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["faqs"] }),
+  });
+}
+
 // ─── Contact Enquiries ─────────────────────────────────────────────────────
 
 export function useGetAllContactEnquiries() {
@@ -390,7 +716,18 @@ export function useGetAllContactEnquiries() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        return await actor.getAllContactEnquiries();
+        const raw = await actor.getAllContactEnquiries();
+        return raw.map((e) => {
+          const sep = e.message.indexOf("|||");
+          if (sep !== -1) {
+            return {
+              ...e,
+              selectedPlan: e.message.slice(0, sep),
+              message: e.message.slice(sep + 3),
+            };
+          }
+          return { ...e, selectedPlan: "" };
+        });
       } catch {
         return [];
       }
@@ -408,20 +745,27 @@ export function useSubmitContactEnquiry() {
       email,
       phone,
       message,
+      selectedPlan = "",
     }: {
       name: string;
       email: string;
       phone: string;
       message: string;
+      selectedPlan?: string;
     }) => {
       if (!actor) throw new Error("Not connected");
-      return actor.submitContactEnquiry(name, email, phone, message);
+      return actor.submitContactEnquiry(
+        name,
+        email,
+        phone,
+        message,
+        selectedPlan ?? "",
+      );
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["contact-enquiries"] }),
   });
 }
 
-// Keep for backward compat
 export function useSubmitContactForm() {
   return useSubmitContactEnquiry();
 }

@@ -7,13 +7,25 @@ import {
   MessageCircle,
   Play,
   Share2,
-  Star,
   TrendingUp,
   Video,
 } from "lucide-react";
 import { motion, useInView } from "motion/react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import SectionTitle from "../components/SectionTitle";
+import {
+  useGetPublishedBrands,
+  useGetPublishedVideos,
+  useGetSiteStats,
+} from "../hooks/useQueries";
+
+const FALLBACK_VIMEO_IDS = [
+  "1176462678",
+  "1176462651",
+  "1176462632",
+  "1176462602",
+  "1176462586",
+];
 
 const services = [
   {
@@ -41,53 +53,9 @@ const services = [
     label: "Script Writing",
     desc: "Compelling scripts for any format",
   },
-  {
-    icon: Star,
-    label: "YouTube Growth",
-    desc: "Strategy & content for channel expansion",
-  },
 ];
 
-const featuredWork = [
-  {
-    title: "Brand Commercial",
-    category: "Ads & Promotions",
-    gradient: "from-amber-900/80 via-orange-950/90 to-black",
-    img: "/assets/generated/portfolio-ads.dim_800x500.jpg",
-  },
-  {
-    title: "Cityscape Timelapse",
-    category: "Cinematography",
-    gradient: "from-blue-950/80 via-slate-900/90 to-black",
-    img: "/assets/generated/portfolio-cinematic.dim_800x500.jpg",
-  },
-  {
-    title: "Product Launch Reel",
-    category: "Reels & Short Content",
-    gradient: "from-purple-950/80 via-slate-900/90 to-black",
-    img: "/assets/generated/portfolio-reels.dim_800x500.jpg",
-  },
-  {
-    title: "Edit Showreel 2024",
-    category: "Video Editing",
-    gradient: "from-emerald-950/80 via-slate-900/90 to-black",
-    img: "/assets/generated/portfolio-editing.dim_800x500.jpg",
-  },
-  {
-    title: "Wedding Highlights",
-    category: "Cinematography",
-    gradient: "from-rose-950/80 via-slate-900/90 to-black",
-    img: null,
-  },
-  {
-    title: "Tech Startup Story",
-    category: "Brand Film",
-    gradient: "from-cyan-950/80 via-slate-900/90 to-black",
-    img: null,
-  },
-];
-
-const brands = [
+const fallbackBrands = [
   "Beef Boss Thanjavur",
   "Anand Saloon Thanjavur",
   "Thanjai Car Accessories",
@@ -97,88 +65,141 @@ const brands = [
   "Abi Kowsa",
 ];
 
-const processSteps = [
-  {
-    num: "01",
-    label: "Shoot",
-    desc: "Capturing your vision with professional cinema gear",
-  },
-  {
-    num: "02",
-    label: "Edit",
-    desc: "Precision editing with world-class software",
-  },
-  {
-    num: "03",
-    label: "Review",
-    desc: "Collaborative feedback and refinement rounds",
-  },
-  {
-    num: "04",
-    label: "Deliver",
-    desc: "Final delivery in all required formats",
-  },
-];
+function AnimatedCounter({
+  target,
+  suffix = "",
+  label,
+}: { target: number; suffix?: string; label: string }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
 
-const filmstripItems = Array.from({ length: 40 }, (_, i) => i);
+  useEffect(() => {
+    if (!inView) return;
+    let start = 0;
+    const duration = 2000;
+    const step = Math.ceil(target / (duration / 16));
+    const timer = setInterval(() => {
+      start = Math.min(start + step, target);
+      setCount(start);
+      if (start >= target) clearInterval(timer);
+    }, 16);
+    return () => clearInterval(timer);
+  }, [inView, target]);
 
-function FeaturedCard({
-  item,
-  index,
-}: { item: (typeof featuredWork)[0]; index: number }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-50px" });
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 30 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="relative rounded-sm overflow-hidden card-cinematic cursor-pointer gold-border group"
-    >
-      <div className="aspect-video relative overflow-hidden">
-        {item.img ? (
-          <img
-            src={item.img}
-            alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${item.gradient}`} />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="play-btn">
-            <Play
-              className="w-6 h-6 text-primary-foreground ml-1"
-              fill="currentColor"
-            />
-          </div>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <span className="text-xs text-gold uppercase tracking-widest font-sans-ui">
-            {item.category}
-          </span>
-          <h3 className="font-display text-base font-semibold text-foreground mt-1">
-            {item.title}
-          </h3>
-        </div>
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
+    <div ref={ref} className="text-center">
+      <div className="font-display text-4xl md:text-5xl font-bold text-gold">
+        {count}
+        {suffix}
       </div>
-    </motion.div>
+      <p className="text-muted-foreground text-sm uppercase tracking-widest mt-2 font-sans-ui">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function VimeoCard({
+  vimeoId,
+  title,
+  isMobile,
+}: { vimeoId: string; title: string; isMobile: boolean }) {
+  const [playing, setPlaying] = useState(false);
+
+  if (isMobile) {
+    return (
+      <div className="relative rounded-sm overflow-hidden bg-black border border-border/50 gold-border">
+        <div className="aspect-video relative flex items-center justify-center bg-gradient-to-br from-zinc-900 to-black">
+          {!playing ? (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
+              <button
+                type="button"
+                onClick={() => setPlaying(true)}
+                className="relative z-10 play-btn"
+                aria-label={`Play ${title}`}
+                data-ocid="portfolio.button"
+              >
+                <Play
+                  className="w-8 h-8 text-primary-foreground ml-1"
+                  fill="currentColor"
+                />
+              </button>
+              <div className="absolute bottom-3 left-4">
+                <span className="text-xs text-gold uppercase tracking-widest">
+                  {title}
+                </span>
+              </div>
+            </>
+          ) : (
+            <iframe
+              src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1&muted=1`}
+              className="absolute inset-0 w-full h-full"
+              allow="autoplay; fullscreen"
+              allowFullScreen
+              title={title}
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative rounded-sm overflow-hidden bg-black border border-border/50 gold-border group">
+      <div className="aspect-video relative">
+        <iframe
+          src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1&muted=1&loop=1&background=1`}
+          className="absolute inset-0 w-full h-full"
+          allow="autoplay; fullscreen"
+          allowFullScreen
+          title={title}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
+          <span className="text-xs text-gold uppercase tracking-widest font-sans-ui">
+            {title}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }
 
 export default function Home() {
-  const heroRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const { data: backendVideos } = useGetPublishedVideos();
+  const { data: backendBrands } = useGetPublishedBrands();
+  const { data: stats } = useGetSiteStats();
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const featuredVideos =
+    backendVideos && backendVideos.length > 0
+      ? backendVideos
+          .slice(0, 5)
+          .map((v) => ({ id: v.vimeoId, title: v.title }))
+      : FALLBACK_VIMEO_IDS.map((id, i) => ({ id, title: `Project ${i + 1}` }));
+
+  const brands =
+    backendBrands && backendBrands.length > 0
+      ? backendBrands.map((b) => b.name)
+      : fallbackBrands;
+
+  const videosDelivered = stats ? Number(stats.videosDelivered) : 50;
+  const happyClients = stats ? Number(stats.happyClients) : 15;
+  const viewsGenerated = stats ? Number(stats.viewsGenerated) : 3;
 
   return (
     <div className="overflow-hidden">
       {/* HERO */}
-      <section
-        ref={heroRef}
-        className="relative min-h-screen flex items-center justify-center overflow-hidden"
-      >
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="/assets/generated/hero-cinematographer.dim_1920x1080.jpg"
@@ -198,7 +219,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-gold text-xs uppercase tracking-[0.4em] mb-6 font-sans-ui"
           >
-            Creative Studio
+            Creative Studio · Thanjavur
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 40 }}
@@ -259,7 +280,68 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* WHAT I DO */}
+      {/* STATS */}
+      <section className="py-16 bg-charcoal border-y border-gold/20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-3 gap-8">
+            <AnimatedCounter
+              target={videosDelivered}
+              suffix="+"
+              label="Videos Delivered"
+            />
+            <AnimatedCounter
+              target={happyClients}
+              suffix="+"
+              label="Happy Clients"
+            />
+            <AnimatedCounter
+              target={viewsGenerated}
+              suffix="M+"
+              label="Views Generated"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURED WORK */}
+      <section className="py-24 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <SectionTitle
+            accent="Portfolio"
+            title="Featured Work"
+            subtitle="Real projects — watch them play right here"
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
+            {featuredVideos.map((video, i) => (
+              <motion.div
+                key={video.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
+                data-ocid={`featured.item.${i + 1}`}
+              >
+                <VimeoCard
+                  vimeoId={video.id}
+                  title={video.title}
+                  isMobile={isMobile}
+                />
+              </motion.div>
+            ))}
+          </div>
+          <div className="mt-10 text-center">
+            <Link
+              to="/portfolio"
+              className="inline-flex items-center gap-2 border border-gold/50 text-gold px-8 py-3 text-sm uppercase tracking-widest hover:bg-gold/10 transition-all rounded-sm"
+              data-ocid="featured.primary_button"
+            >
+              View Full Portfolio <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* SERVICES */}
       <section className="py-24 bg-charcoal-light">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <SectionTitle
@@ -267,7 +349,7 @@ export default function Home() {
             title="Your Vision, My Edit"
             subtitle="Full-service creative production — from concept to final delivery"
           />
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-12">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-12">
             {services.map((svc, i) => {
               const Icon = svc.icon;
               return (
@@ -290,76 +372,6 @@ export default function Home() {
                 </motion.div>
               );
             })}
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURED WORK */}
-      <section className="py-24 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <SectionTitle
-            accent="Portfolio"
-            title="Featured Work"
-            subtitle="A curated selection of recent projects across video editing, cinematography, and content creation"
-          />
-          <div className="relative mb-8">
-            <div className="h-6 flex items-center gap-2 overflow-hidden opacity-30">
-              {filmstripItems.map((n) => (
-                <div
-                  key={n}
-                  className="w-4 h-4 flex-shrink-0 border border-gold/40 rounded-sm"
-                />
-              ))}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredWork.map((item, i) => (
-              <FeaturedCard key={item.title} item={item} index={i} />
-            ))}
-          </div>
-          <div className="mt-10 text-center">
-            <Link
-              to="/portfolio"
-              className="inline-flex items-center gap-2 border border-gold/50 text-gold px-8 py-3 text-sm uppercase tracking-widest hover:bg-gold/10 transition-all rounded-sm"
-              data-ocid="featured.primary_button"
-            >
-              View Full Portfolio <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* PROCESS */}
-      <section className="py-24 bg-charcoal-light">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="rounded-sm border border-gold/30 p-8 md:p-16 text-center bg-gradient-to-br from-charcoal to-charcoal-mid relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-gold/5 via-transparent to-gold/5" />
-            <p className="text-gold text-xs uppercase tracking-[0.4em] mb-2 font-sans-ui">
-              How It Works
-            </p>
-            <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground uppercase mb-12">
-              Discover · Create · Deliver
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 relative">
-              {processSteps.map((step, i) => (
-                <motion.div
-                  key={step.num}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: i * 0.1 }}
-                  className="flex flex-col items-center"
-                >
-                  <span className="font-display text-4xl font-bold text-gold/30 mb-2">
-                    {step.num}
-                  </span>
-                  <h3 className="font-display text-lg font-bold text-gold uppercase tracking-wide mb-2">
-                    {step.label}
-                  </h3>
-                  <p className="text-xs text-muted-foreground">{step.desc}</p>
-                </motion.div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -388,7 +400,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TAGLINE BANNER */}
+      {/* CTA */}
       <section className="py-20 bg-gold/10 border-y border-gold/30">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <motion.p
@@ -419,14 +431,14 @@ export default function Home() {
               href="https://wa.me/919487897160"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-gold text-primary-foreground px-8 py-4 text-sm font-semibold uppercase tracking-widest hover:bg-gold-light transition-all gold-shimmer rounded-sm"
+              className="inline-flex items-center gap-2 bg-gold text-primary-foreground px-8 py-4 text-sm font-semibold uppercase tracking-widest hover:bg-gold-light transition-all rounded-sm"
               data-ocid="cta.primary_button"
             >
               <MessageCircle className="w-4 h-4" /> Start a Project
             </a>
             <Link
               to="/pricing"
-              className="inline-flex items-center gap-2 border border-gold/50 text-foreground px-8 py-4 text-sm font-semibold uppercase tracking-widest hover:border-gold hover:bg-gold/10 transition-all rounded-sm"
+              className="inline-flex items-center gap-2 border border-gold/50 text-gold px-8 py-4 text-sm font-semibold uppercase tracking-widest hover:bg-gold/10 transition-all rounded-sm"
               data-ocid="cta.secondary_button"
             >
               View Pricing

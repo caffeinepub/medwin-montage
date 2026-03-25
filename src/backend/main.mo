@@ -2,18 +2,15 @@ import Nat "mo:core/Nat";
 import Map "mo:core/Map";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
-import List "mo:core/List";
 import Time "mo:core/Time";
 import Text "mo:core/Text";
-import Iter "mo:core/Iter";
-import Migration "migration";
+import Storage "blob-storage/Storage";
+import MixinStorage "blob-storage/Mixin";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
-// Specify upgrade migration with migration module
-(with migration = Migration.run)
 actor {
-  // Include authorization mixin, providing access control methods
+  include MixinStorage();
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
@@ -86,6 +83,57 @@ actor {
     mapsUrl : Text;
   };
 
+  type PageSection = {
+    id : Text;
+    heading : Text;
+    description : Text;
+    imageUrl : Text;
+    visible : Bool;
+  };
+
+  type PageContent = {
+    pageId : Text;
+    heroTitle : Text;
+    heroSubtitle : Text;
+    heroBackgroundImage : Text;
+    sections : [PageSection];
+  };
+
+  type PresetPackage = {
+    id : Nat;
+    name : Text;
+    price : Nat;
+    features : [Text];
+    deliveryDays : Nat;
+    enabled : Bool;
+  };
+
+  type ReelPricing = {
+    editingOnly : Nat;
+    editingCamera : Nat;
+    editingContentCamera : Nat;
+  };
+
+  type MonthlyPackage = {
+    price : Nat;
+    videoCount : Nat;
+    description : Text;
+    enabled : Bool;
+  };
+
+  type SliderRates = {
+    editing : Nat;
+    videography : Nat;
+    content : Nat;
+    other : Nat;
+  };
+
+  type SiteStats = {
+    videosDelivered : Nat;
+    happyClients : Nat;
+    viewsGenerated : Nat;
+  };
+
   type VideoInput = {
     title : Text;
     category : Text;
@@ -120,13 +168,11 @@ actor {
     note : Text;
   };
 
-  type TestimonialFullInput = {
-    id : Nat;
+  type TestimonialInput = {
     clientName : Text;
     company : Text;
     review : Text;
     rating : Nat;
-    published : Bool;
   };
 
   type FAQInput = {
@@ -143,7 +189,7 @@ actor {
     published : Bool;
   };
 
-  // Persistent storage
+  // State
   var nextVideoId = 1;
   var nextBrandId = 1;
   var nextServiceId = 1;
@@ -151,6 +197,7 @@ actor {
   var nextTestimonialId = 1;
   var nextFAQId = 1;
   var nextContactId = 1;
+  var nextPresetPackageId = 1;
 
   let portfolioVideos = Map.empty<Nat, PortfolioVideo>();
   let brandPartners = Map.empty<Nat, Brand>();
@@ -159,6 +206,8 @@ actor {
   let testimonials = Map.empty<Nat, Testimonial>();
   let faqs = Map.empty<Nat, FAQItem>();
   let contactEnquiries = Map.empty<Nat, ContactEnquiry>();
+  let pageContents = Map.empty<Text, PageContent>();
+  let presetPackages = Map.empty<Nat, PresetPackage>();
 
   var officeProfile : OfficeProfile = {
     email = "medwinmontage@gmail.com";
@@ -169,637 +218,523 @@ actor {
     mapsUrl = "https://maps.app.goo.gl/KLb5gLXJ9gk5qKmQ8";
   };
 
-  // Helper function to check admin access
-  func assertAdmin(caller : Principal) {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Admin access required");
-    };
+  var reelPricing : ReelPricing = {
+    editingOnly = 450;
+    editingCamera = 900;
+    editingContentCamera = 1500;
   };
 
-  // Portfolio Videos
+  var monthlyPackage : MonthlyPackage = {
+    price = 8999;
+    videoCount = 12;
+    description = "10-12 videos per month including editing, shooting, content, and growth support";
+    enabled = true;
+  };
+
+  var sliderRates : SliderRates = {
+    editing = 450;
+    videography = 500;
+    content = 150;
+    other = 500;
+  };
+
+  var siteStats : SiteStats = {
+    videosDelivered = 50;
+    happyClients = 15;
+    viewsGenerated = 3000000;
+  };
+
+  // ---- Portfolio Videos ----
   public shared ({ caller }) func addPortfolioVideo(video : VideoInput) : async Nat {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     let id = nextVideoId;
     nextVideoId += 1;
-
-    let newVideo : PortfolioVideo = {
-      id;
-      title = video.title;
-      category = video.category;
-      vimeoId = video.vimeoId;
-      description = video.description;
-      published = false;
-    };
-
-    portfolioVideos.add(id, newVideo);
+    portfolioVideos.add(id, { id; title = video.title; category = video.category; vimeoId = video.vimeoId; description = video.description; published = false });
     id;
   };
 
   public shared ({ caller }) func updatePortfolioVideo(video : PortfolioVideoFullInput) : async () {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     portfolioVideos.add(video.id, video);
   };
 
+  public shared ({ caller }) func deletePortfolioVideo(videoId : Nat) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    ignore portfolioVideos.remove(videoId);
+  };
+
   public shared ({ caller }) func toggleVideoPublished(videoId : Nat) : async Bool {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     switch (portfolioVideos.get(videoId)) {
-      case (null) { Runtime.trap("Video not found") };
-      case (?video) {
-        let updatedVideo = { video with published = not video.published };
-        portfolioVideos.add(videoId, updatedVideo);
-        updatedVideo.published;
+      case null Runtime.trap("Not found");
+      case (?v) {
+        let updated = { v with published = not v.published };
+        portfolioVideos.add(videoId, updated);
+        updated.published;
       };
     };
   };
 
-  public query ({ caller }) func getPublishedVideos() : async [PortfolioVideo] {
-    portfolioVideos.values().filter(func(video) { video.published }).toArray();
+  public query func getPublishedVideos() : async [PortfolioVideo] {
+    portfolioVideos.values().filter(func(v) { v.published }).toArray();
   };
 
   public query ({ caller }) func getAllVideos() : async [PortfolioVideo] {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     portfolioVideos.values().toArray();
   };
 
-  public query ({ caller }) func getVideosByCategory(category : Text) : async [PortfolioVideo] {
-    portfolioVideos.values().filter(func(video) { video.published and video.category == category }).toArray();
+  public query func getVideosByCategory(category : Text) : async [PortfolioVideo] {
+    portfolioVideos.values().filter(func(v) { v.published and v.category == category }).toArray();
   };
 
-  public query ({ caller }) func getVideoById(videoId : Nat) : async ?PortfolioVideo {
-    switch (portfolioVideos.get(videoId)) {
-      case (null) { null };
-      case (?video) {
-        // Only return if published OR caller is admin
-        if (video.published or AccessControl.isAdmin(accessControlState, caller)) {
-          ?video;
-        } else {
-          null;
-        };
-      };
-    };
-  };
-
-  // Brand Partners
-  func assertBrandCategory(category : Text) {
-    if (category != "food" and category != "retail" and category != "cafe" and category != "healthcare" and category != "school" and category != "mineral" and category != "hotel") {
-      Runtime.trap("Invalid brand category. Allowed values: food, retail, cafe, healthcare, school, mineral, hotel");
-    };
-  };
-
+  // ---- Brands ----
   public shared ({ caller }) func addBrandPartner(brand : BrandInput) : async Nat {
-    assertAdmin(caller);
-    assertBrandCategory(brand.category);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     let id = nextBrandId;
     nextBrandId += 1;
-
-    let newBrand : Brand = {
-      id;
-      name = brand.name;
-      category = brand.category;
-      location = brand.location;
-      description = brand.description;
-      mapsUrl = brand.mapsUrl;
-      published = false;
-    };
-
-    brandPartners.add(id, newBrand);
+    brandPartners.add(id, { id; name = brand.name; category = brand.category; location = brand.location; description = brand.description; mapsUrl = brand.mapsUrl; published = false });
     id;
   };
 
   public shared ({ caller }) func updateBrandPartner(id : Nat, brand : BrandInput) : async () {
-    assertAdmin(caller);
-    assertBrandCategory(brand.category);
-
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     switch (brandPartners.get(id)) {
-      case (null) { Runtime.trap("Brand partner not found") };
-      case (?existingBrand) {
-        let updatedBrand : Brand = {
-          id;
-          name = brand.name;
-          category = brand.category;
-          location = brand.location;
-          description = brand.description;
-          mapsUrl = brand.mapsUrl;
-          published = existingBrand.published;
-        };
-        brandPartners.add(id, updatedBrand);
+      case null Runtime.trap("Not found");
+      case (?b) {
+        brandPartners.add(id, { id; name = brand.name; category = brand.category; location = brand.location; description = brand.description; mapsUrl = brand.mapsUrl; published = b.published });
       };
     };
+  };
+
+  public shared ({ caller }) func deleteBrandPartner(brandId : Nat) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    ignore brandPartners.remove(brandId);
   };
 
   public shared ({ caller }) func toggleBrandPublished(brandId : Nat) : async Bool {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     switch (brandPartners.get(brandId)) {
-      case (null) { Runtime.trap("Brand not found") };
-      case (?brand) {
-        let updatedBrand = { brand with published = not brand.published };
-        brandPartners.add(brandId, updatedBrand);
-        updatedBrand.published;
+      case null Runtime.trap("Not found");
+      case (?b) {
+        let updated = { b with published = not b.published };
+        brandPartners.add(brandId, updated);
+        updated.published;
       };
     };
   };
 
-  public query ({ caller }) func getPublishedBrands() : async [Brand] {
-    brandPartners.values().filter(func(brand) { brand.published }).toArray();
+  public query func getPublishedBrands() : async [Brand] {
+    brandPartners.values().filter(func(b) { b.published }).toArray();
   };
 
-  public query ({ caller }) func getBrandsByCategory(category : Text) : async [Brand] {
-    brandPartners.values().filter(func(brand) { brand.published and brand.category == category }).toArray();
+  public query func getBrandsByCategory(category : Text) : async [Brand] {
+    brandPartners.values().filter(func(b) { b.published and b.category == category }).toArray();
   };
 
-  // Services
+  // ---- Services ----
   public shared ({ caller }) func addService(service : ServiceInput) : async Nat {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     let id = nextServiceId;
     nextServiceId += 1;
-
-    let newService : Service = {
-      id;
-      title = service.title;
-      description = service.description;
-      features = service.features;
-      published = false;
-    };
-
-    services.add(id, newService);
+    services.add(id, { id; title = service.title; description = service.description; features = service.features; published = false });
     id;
   };
 
   public shared ({ caller }) func updateService(service : ServiceFullInput) : async () {
-    assertAdmin(caller);
-    services.add(service.id, {
-      id = service.id;
-      title = service.title;
-      description = service.description;
-      features = service.features;
-      published = true;
-    });
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    services.add(service.id, { id = service.id; title = service.title; description = service.description; features = service.features; published = true });
   };
 
   public shared ({ caller }) func toggleServicePublished(serviceId : Nat) : async Bool {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     switch (services.get(serviceId)) {
-      case (null) { Runtime.trap("Service not found") };
-      case (?service) {
-        let updatedService = { service with published = not service.published };
-        services.add(serviceId, updatedService);
-        updatedService.published;
+      case null Runtime.trap("Not found");
+      case (?s) {
+        let updated = { s with published = not s.published };
+        services.add(serviceId, updated);
+        updated.published;
       };
     };
   };
 
-  public query ({ caller }) func getPublishedServices() : async [Service] {
-    services.values().filter(func(service) { service.published }).toArray();
+  public query func getPublishedServices() : async [Service] {
+    services.values().filter(func(s) { s.published }).toArray();
   };
 
-  // Pricing Plans
+  // ---- Pricing Plans ----
   public shared ({ caller }) func addPricingPlan(plan : PricingPlanInput) : async Nat {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     let id = nextPricingPlanId;
     nextPricingPlanId += 1;
-
-    let newPlan : PricingPlan = {
-      id;
-      planLabel = plan.planLabel;
-      price = plan.price;
-      note = plan.note;
-      published = false;
-    };
-
-    pricingPlans.add(id, newPlan);
+    pricingPlans.add(id, { id; planLabel = plan.planLabel; price = plan.price; note = plan.note; published = false });
     id;
   };
 
   public shared ({ caller }) func updatePricingPlan(id : Nat, plan : PricingPlanInput) : async () {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     switch (pricingPlans.get(id)) {
-      case (null) { Runtime.trap("Pricing plan not found") };
-      case (?existingPlan) {
-        let updatedPlan : PricingPlan = {
-          id;
-          planLabel = plan.planLabel;
-          price = plan.price;
-          note = plan.note;
-          published = existingPlan.published;
-        };
-        pricingPlans.add(id, updatedPlan);
+      case null Runtime.trap("Not found");
+      case (?p) {
+        pricingPlans.add(id, { id; planLabel = plan.planLabel; price = plan.price; note = plan.note; published = p.published });
       };
     };
   };
 
   public shared ({ caller }) func togglePricingPublished(planId : Nat) : async Bool {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     switch (pricingPlans.get(planId)) {
-      case (null) { Runtime.trap("Pricing plan not found") };
-      case (?plan) {
-        let updatedPlan = { plan with published = not plan.published };
-        pricingPlans.add(planId, updatedPlan);
-        updatedPlan.published;
+      case null Runtime.trap("Not found");
+      case (?p) {
+        let updated = { p with published = not p.published };
+        pricingPlans.add(planId, updated);
+        updated.published;
       };
     };
   };
 
-  public query ({ caller }) func getPublishedPricingPlans() : async [PricingPlan] {
-    pricingPlans.values().filter(func(plan) { plan.published }).toArray();
+  public query func getPublishedPricingPlans() : async [PricingPlan] {
+    pricingPlans.values().filter(func(p) { p.published }).toArray();
   };
 
-  // Testimonials
-  public shared ({ caller }) func addTestimonial(input : TestimonialFullInput) : async Nat {
-    assertAdmin(caller);
+  // ---- Testimonials ----
+  public shared ({ caller }) func addTestimonial(input : TestimonialInput) : async Nat {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     let id = nextTestimonialId;
     nextTestimonialId += 1;
-
-    let testimonial : Testimonial = {
-      id;
-      clientName = input.clientName;
-      company = input.company;
-      review = input.review;
-      rating = input.rating;
-      published = false;
-    };
-
-    testimonials.add(id, testimonial);
+    testimonials.add(id, { id; clientName = input.clientName; company = input.company; review = input.review; rating = input.rating; published = false });
     id;
+  };
+
+  public shared ({ caller }) func deleteTestimonial(testimonialId : Nat) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    ignore testimonials.remove(testimonialId);
   };
 
   public shared ({ caller }) func toggleTestimonialPublished(testimonialId : Nat) : async Bool {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     switch (testimonials.get(testimonialId)) {
-      case (null) { Runtime.trap("Testimonial not found") };
-      case (?testimonial) {
-        let updatedTestimonial = { testimonial with published = not testimonial.published };
-        testimonials.add(testimonialId, updatedTestimonial);
-        updatedTestimonial.published;
+      case null Runtime.trap("Not found");
+      case (?t) {
+        let updated = { t with published = not t.published };
+        testimonials.add(testimonialId, updated);
+        updated.published;
       };
     };
   };
 
-  public query ({ caller }) func getPublishedTestimonials() : async [Testimonial] {
-    testimonials.values().filter(func(testimonial) { testimonial.published }).toArray();
+  public query func getPublishedTestimonials() : async [Testimonial] {
+    testimonials.values().filter(func(t) { t.published }).toArray();
   };
 
-  // FAQs
+  // ---- FAQs ----
   public shared ({ caller }) func addFAQItem(faq : FAQInput) : async Nat {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     let id = nextFAQId;
     nextFAQId += 1;
-
-    let newFAQ : FAQItem = {
-      id;
-      question = faq.question;
-      answer = faq.answer;
-      published = false;
-    };
-
-    faqs.add(id, newFAQ);
+    faqs.add(id, { id; question = faq.question; answer = faq.answer; published = false });
     id;
+  };
+
+  public shared ({ caller }) func deleteFAQItem(faqId : Nat) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    ignore faqs.remove(faqId);
   };
 
   public shared ({ caller }) func toggleFAQPublished(faqId : Nat) : async Bool {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     switch (faqs.get(faqId)) {
-      case (null) { Runtime.trap("FAQ not found") };
-      case (?faq) {
-        let updatedFAQ = { faq with published = not faq.published };
-        faqs.add(faqId, updatedFAQ);
-        updatedFAQ.published;
+      case null Runtime.trap("Not found");
+      case (?f) {
+        let updated = { f with published = not f.published };
+        faqs.add(faqId, updated);
+        updated.published;
       };
     };
   };
 
-  public query ({ caller }) func getPublishedFAQs() : async [FAQItem] {
-    faqs.values().filter(func(faq) { faq.published }).toArray();
+  public query func getPublishedFAQs() : async [FAQItem] {
+    faqs.values().filter(func(f) { f.published }).toArray();
   };
 
-  // Contact Enquiries
-  public shared ({ caller }) func submitContactEnquiry(name : Text, email : Text, phone : Text, message : Text) : async Nat {
+  // ---- Contact Enquiries ----
+  public shared func submitContactEnquiry(name : Text, email : Text, phone : Text, message : Text, selectedPlan : Text) : async Nat {
     let id = nextContactId;
     nextContactId += 1;
-
-    let newEnquiry : ContactEnquiry = {
-      id;
-      name;
-      email;
-      phone;
-      message;
-      timestamp = Time.now();
-    };
-
-    contactEnquiries.add(id, newEnquiry);
+    let storedMessage = if (selectedPlan == "") { message } else { selectedPlan # "|||" # message };
+    contactEnquiries.add(id, { id; name; email; phone; message = storedMessage; timestamp = Time.now() });
     id;
   };
 
-  // Get all contact enquiries (admin only)
   public query ({ caller }) func getAllContactEnquiries() : async [ContactEnquiry] {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     contactEnquiries.values().toArray();
   };
 
-  // Office Profile
+  // ---- Office Profile ----
   public shared ({ caller }) func updateOfficeProfile(profile : OfficeProfile) : async () {
-    assertAdmin(caller);
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
     officeProfile := profile;
   };
 
-  public query ({ caller }) func getOfficeProfile() : async OfficeProfile {
-    officeProfile;
+  public query func getOfficeProfile() : async OfficeProfile { officeProfile };
+
+  // ---- Page Content ----
+  public query func getPageContent(pageId : Text) : async ?PageContent {
+    pageContents.get(pageId);
   };
 
-  // Generate filtered results (public methods)
-
-  public query ({ caller }) func publicCombinedVideosBrands() : async {
-    videos : [PortfolioVideo];
-    brands : [Brand];
-  } {
-    let publishedVideos = portfolioVideos.values().filter(func(video) { video.published }).toArray();
-    let publishedBrands = brandPartners.values().filter(func(brand) { brand.published }).toArray();
-    { videos = publishedVideos; brands = publishedBrands };
+  public shared ({ caller }) func updatePageContent(pageId : Text, content : PageContent) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    pageContents.add(pageId, { content with pageId });
   };
 
-  public query ({ caller }) func getServicesAndPricing() : async {
-    services : [Service];
-    pricing : [PricingPlan];
-  } {
-    let publishedServices = services.values().filter(func(service) { service.published }).toArray();
-    let publishedPricing = pricingPlans.values().filter(func(plan) { plan.published }).toArray();
-    { services = publishedServices; pricing = publishedPricing };
+  public query ({ caller }) func getAllPageContent() : async [(Text, PageContent)] {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    pageContents.entries().toArray();
   };
 
-  // Seed data during upgrade (for initial population)
+  // ---- Preset Packages ----
+  public shared ({ caller }) func updatePresetPackage(pkg : PresetPackage) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    presetPackages.add(pkg.id, pkg);
+  };
+
+  public query func getPresetPackages() : async [PresetPackage] {
+    presetPackages.values().filter(func(p) { p.enabled }).toArray();
+  };
+
+  public query ({ caller }) func getAllPresetPackages() : async [PresetPackage] {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    presetPackages.values().toArray();
+  };
+
+  // ---- Reel Pricing ----
+  public shared ({ caller }) func updateReelPricing(pricing : ReelPricing) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    reelPricing := pricing;
+  };
+
+  public query func getReelPricing() : async ReelPricing { reelPricing };
+
+  // ---- Monthly Package ----
+  public shared ({ caller }) func updateMonthlyPackage(pkg : MonthlyPackage) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    monthlyPackage := pkg;
+  };
+
+  public query func getMonthlyPackage() : async MonthlyPackage { monthlyPackage };
+
+  // ---- Slider Rates ----
+  public shared ({ caller }) func updateSliderRates(rates : SliderRates) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    sliderRates := rates;
+  };
+
+  public query func getSliderRates() : async SliderRates { sliderRates };
+
+  // ---- Site Stats ----
+  public shared ({ caller }) func updateSiteStats(stats : SiteStats) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    siteStats := stats;
+  };
+
+  public query func getSiteStats() : async SiteStats { siteStats };
+
+  // ---- Combined queries ----
+  public query func publicCombinedVideosBrands() : async { videos : [PortfolioVideo]; brands : [Brand] } {
+    {
+      videos = portfolioVideos.values().filter(func(v) { v.published }).toArray();
+      brands = brandPartners.values().filter(func(b) { b.published }).toArray();
+    };
+  };
+
+  public query func getServicesAndPricing() : async { services : [Service]; pricing : [PricingPlan] } {
+    {
+      services = services.values().filter(func(s) { s.published }).toArray();
+      pricing = pricingPlans.values().filter(func(p) { p.published }).toArray();
+    };
+  };
+
+  // ---- Seed Data ----
   public shared ({ caller }) func seedData() : async () {
-    assertAdmin(caller);
-    // Portfolio Videos
-    let videoSeedData : [(Text, Text, Text, Text)] = [
-      ("Medwin Montage Showreel", "showreel", "12345678", "Cinematic portfolio showcasing various works"),
-      ("Food Brand Ad Film", "adfilm", "87654321", "Visual storytelling for restaurant launch campaign"),
-      ("Wedding Highlights", "wedding", "24681357", "Candid wedding moments captured in cinematic style"),
-      ("Brand Documentary", "documentary", "13572468", "Brand journey documentary for heritage company"),
-      ("Event Coverage Promo", "promo", "98765432", "Event recap video for corporate conference"),
-      ("Food brand Ad Film 2", "adfilm", "956400007", "Introducing new food brand in Thanjavur"),
-    ];
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
 
-    for (videoSeed in videoSeedData.values()) {
+    let videoSeeds : [(Text, Text, Text, Text)] = [
+      ("Medwin Montage Showreel", "reels", "1176462678", "Cinematic showreel"),
+      ("Food Brand Ad Film", "ads", "1176462651", "Ad film for restaurant"),
+      ("Event Coverage", "events", "1176462632", "Corporate event coverage"),
+      ("Brand Documentary", "youtube", "1176462602", "Brand story documentary"),
+      ("Product Promo Reel", "reels", "1176462586", "Product promotion reel"),
+    ];
+    for (seed in videoSeeds.values()) {
       let id = nextVideoId;
       nextVideoId += 1;
-
-      let newVideo : PortfolioVideo = {
-        id;
-        title = videoSeed.0;
-        category = videoSeed.1;
-        vimeoId = videoSeed.2;
-        description = videoSeed.3;
-        published = true;
-      };
-
-      portfolioVideos.add(id, newVideo);
+      portfolioVideos.add(id, { id; title = seed.0; category = seed.1; vimeoId = seed.2; description = seed.3; published = true });
     };
 
-    // Brand Partners
-    let brandSeedData : [Brand] = [
-      {
-        id = 1;
-        name = "The Foodies Spot";
-        category = "food";
-        location = "Thanjavur";
-        description = "Popular restaurant chain in Thanjavur";
-        mapsUrl = "https://maps.app.goo.gl/foodies-spot";
-        published = true;
-      },
-      {
-        id = 2;
-        name = "Way2Home Bazaar";
-        category = "retail";
-        location = "Thanjavur";
-        description = "Furniture and home essentials mall";
-        mapsUrl = "https://maps.app.goo.gl/way2home";
-        published = true;
-      },
-      {
-        id = 3;
-        name = "The Chai Spot";
-        category = "cafe";
-        location = "Thanjavur";
-        description = "Cafe and food joint with cozy ambiance";
-        mapsUrl = "https://maps.app.goo.gl/chai-spot";
-        published = true;
-      },
-      {
-        id = 4;
-        name = "Idhayam Hospital";
-        category = "healthcare";
-        location = "Thanjavur";
-        description = "Healthcare and wellness center";
-        mapsUrl = "https://maps.app.goo.gl/idhayam-hospital";
-        published = true;
-      },
-      {
-        id = 5;
-        name = "Sirkazhi School";
-        category = "school";
-        location = "Thanjavur";
-        description = "Educational institution serving Thanjavur region";
-        mapsUrl = "https://maps.app.goo.gl/sirkazhi-school";
-        published = true;
-      },
-      {
-        id = 6;
-        name = "Chidambaram water";
-        category = "mineral";
-        location = "Thanjavur";
-        description = "Certified mineral water supplier";
-        mapsUrl = "https://maps.app.goo.gl/chidambaram-water";
-        published = true;
-      },
-      {
-        id = 7;
-        name = "Hotel CAVERA";
-        category = "hotel";
-        location = "Thanjavur, Pudukottai";
-        description = "Hotel and food brand in Thanjavur";
-        mapsUrl = "https://maps.app.goo.gl/hotel-cavera";
-        published = true;
-      },
+    let brandSeeds : [(Text, Text, Text, Text, Text)] = [
+      ("BEEF BOSS THANJAVUR", "food", "Thanjavur", "Popular beef restaurant in Thanjavur", "https://maps.app.goo.gl/KLb5gLXJ9gk5qKmQ8"),
+      ("ANAND SALOON THANJAVUR", "retail", "Thanjavur", "Premium salon services", "https://maps.app.goo.gl/KLb5gLXJ9gk5qKmQ8"),
+      ("THANJAI CAR ACCESSORIES", "retail", "Thanjavur", "Car accessories and modifications", "https://maps.app.goo.gl/KLb5gLXJ9gk5qKmQ8"),
+      ("KOLAPASI RESTAURANT", "food", "Thanjavur", "Authentic Tamil cuisine restaurant", "https://maps.app.goo.gl/KLb5gLXJ9gk5qKmQ8"),
+      ("MY THANJAI DIGITAL MARKETING", "retail", "Thanjavur", "Digital marketing agency", "https://maps.app.goo.gl/KLb5gLXJ9gk5qKmQ8"),
+      ("ELTO LANDSCAPES", "retail", "Thanjavur", "Landscaping and outdoor design", "https://maps.app.goo.gl/KLb5gLXJ9gk5qKmQ8"),
+      ("ABI KOWSA THANJAVUR", "retail", "Thanjavur", "Local business in Thanjavur", "https://maps.app.goo.gl/KLb5gLXJ9gk5qKmQ8"),
     ];
-
-    for (brand in brandSeedData.values()) {
-      brandPartners.add(brand.id, brand);
+    var bId = 1;
+    for (seed in brandSeeds.values()) {
+      brandPartners.add(bId, { id = bId; name = seed.0; category = seed.1; location = seed.2; description = seed.3; mapsUrl = seed.4; published = true });
+      bId += 1;
     };
+    nextBrandId := bId;
 
-    // Services
-    let serviceSeedData : [Service] = [
-      {
-        id = 1;
-        title = "Ad Films";
-        description = "Promotional videos for products, services, and brands";
-        features = ["Script writing", "Direction", "Cinematic visuals", "Professional editing"];
-        published = true;
-      },
-      {
-        id = 2;
-        title = "Weddings Films";
-        description = "Candid wedding highlights, pre/post wedding shoots";
-        features = ["Candid coverage", "Pre-wedding shoots", "Cinematic edits"];
-        published = true;
-      },
-      {
-        id = 3;
-        title = "Event Videography";
-        description = "Capturing events, launches, music videos";
-        features = ["Event coverage", "Stage shows", "Music video production"];
-        published = true;
-      },
-      {
-        id = 4;
-        title = "Brand Documentaries";
-        description = "Brand story, journey, and impact films";
-        features = ["Brand documentaries", "Industry films", "Community profiles"];
-        published = true;
-      },
-      {
-        id = 5;
-        title = "Digital Marketing";
-        description = "Online marketing, social media, visual campaigns";
-        features = ["Campaign planning", "Social media", "Content creation"];
-        published = true;
-      },
-      {
-        id = 6;
-        title = "Photo Shoots";
-        description = "Product, food, interior and lifestyle photography";
-        features = ["Product photography", "Food shoots", "Lifestyle images"];
-        published = true;
-      },
+    let serviceSeeds : [(Text, Text, [Text])] = [
+      ("Video Editing", "Professional video editing for reels, ads, and events", ["Color Grading", "Sound Design", "Motion Graphics", "Fast Delivery"]),
+      ("Cinematography", "Professional camera work for all types of shoots", ["Cinematic Shots", "Drone Footage", "Event Coverage", "Product Shoots"]),
+      ("Content Creation", "Full content pipeline from concept to publish", ["Script Writing", "Direction", "Social Media Content", "Brand Identity"]),
+      ("Digital Marketing", "Grow your brand online with targeted campaigns", ["Social Media Management", "Ad Campaigns", "Analytics", "Growth Strategy"]),
     ];
-
-    for (service in serviceSeedData.values()) {
-      services.add(service.id, service);
+    var sId = 1;
+    for (seed in serviceSeeds.values()) {
+      services.add(sId, { id = sId; title = seed.0; description = seed.1; features = seed.2; published = true });
+      sId += 1;
     };
+    nextServiceId := sId;
 
-    // Pricing Plans
-    let pricingSeedData : [PricingPlan] = [
-      {
-        id = 1;
-        planLabel = "Ad Film (Under 1 Min)";
-        price = 10000;
-        note = "High-quality ad film up to 1 minute duration";
-        published = true;
-      },
-      {
-        id = 2;
-        planLabel = "Wedding Film (Cinematic)";
-        price = 15000;
-        note = "Candid wedding highlights and editing";
-        published = true;
-      },
-      {
-        id = 3;
-        planLabel = "Brand Documentary";
-        price = 5000;
-        note = "In-depth brand journey and story coverage";
-        published = true;
-      },
-      {
-        id = 4;
-        planLabel = "Product Photography (20 images)";
-        price = 18000;
-        note = "Professional photo shoot for products";
-        published = true;
-      },
-      {
-        id = 5;
-        planLabel = "Social Media Monthly";
-        price = 10000;
-        note = "4 video edits/month + strategy support";
-        published = true;
-      },
+    let testSeeds : [(Text, Text, Text, Nat)] = [
+      ("Rajesh Kumar", "BEEF BOSS THANJAVUR", "Amazing video work! Our brand engagement skyrocketed after Medwin edited our content.", 5),
+      ("Priya Sharma", "KOLAPASI RESTAURANT", "Professional, creative, and always delivers on time. Highly recommended!", 5),
+      ("Arun Vijay", "THANJAI CAR ACCESSORIES", "The reels Medwin created for us went viral. Best investment we made!", 5),
+      ("Meena Sundar", "Wedding Client", "Our wedding film was absolutely breathtaking. Will cherish it forever.", 5),
     ];
-
-    for (plan in pricingSeedData.values()) {
-      pricingPlans.add(plan.id, plan);
+    var tId = 1;
+    for (seed in testSeeds.values()) {
+      testimonials.add(tId, { id = tId; clientName = seed.0; company = seed.1; review = seed.2; rating = seed.3; published = true });
+      tId += 1;
     };
+    nextTestimonialId := tId;
 
-    // Testimonials
-    let testimonialSeedData : [Testimonial] = [
-      {
-        id = 1;
-        clientName = "Sriram Kumar";
-        company = "The Chai Spot";
-        review = "Excellent creative work, our brand awareness improved a lot";
-        rating = 5;
-        published = true;
-      },
-      {
-        id = 2;
-        clientName = "Ganesh Idhayam";
-        company = "Idhayam Hospital";
-        review = "Visual documentation captures our service impact beautifully";
-        rating = 4;
-        published = true;
-      },
-      {
-        id = 3;
-        clientName = "Varun Prasad";
-        company = "Way2Home";
-        review = "Impressed with prompt delivery and professionalism";
-        rating = 4;
-        published = true;
-      },
-      {
-        id = 4;
-        clientName = "Kavya S.UserRequest";
-        company = "Wedding Client";
-        review = "Wedding film exceeded our expectations, highly recommended";
-        rating = 5;
-        published = true;
-      },
+    let faqSeeds : [(Text, Text)] = [
+      ("How much does a reel cost?", "Editing only starts at ₹450/video. With camera work it's ₹900, and full service (editing + content + camera) is ₹1500."),
+      ("What is the monthly package?", "Our monthly package is ₹8999 and includes 10-12 videos with editing, shooting, content creation, and growth support."),
+      ("Do you shoot outside Thanjavur?", "Yes, we travel across Tamil Nadu and South India for shoots."),
+      ("What's the delivery time?", "Reels are delivered within 1-3 days. Larger projects typically take 1-2 weeks."),
     ];
-
-    for (testimonial in testimonialSeedData.values()) {
-      testimonials.add(testimonial.id, testimonial);
+    var fId = 1;
+    for (seed in faqSeeds.values()) {
+      faqs.add(fId, { id = fId; question = seed.0; answer = seed.1; published = true });
+      fId += 1;
     };
+    nextFAQId := fId;
 
-    // FAQ Items
-    let faqSeedData : [FAQItem] = [
+    // Seed preset packages
+    presetPackages.add(1, { id = 1; name = "Basic"; price = 3099; features = ["6 Video Edits (Reels/Shorts)", "Basic Cuts & Transitions", "Simple Color Correction", "2 Captions + Script Ideas", "Posting Guidance"]; deliveryDays = 4; enabled = true });
+    presetPackages.add(2, { id = 2; name = "Standard"; price = 7999; features = ["10 Video Edits (Reels/Shorts/Videos)", "Advanced Color Grading", "Sound Design", "4 Captions + Script Writing", "Hashtag Strategy", "1 Week Social Media Handling", "Basic Growth Strategy"]; deliveryDays = 2; enabled = true });
+    presetPackages.add(3, { id = 3; name = "Premium"; price = 9999; features = ["18 Video Edits", "Shoot Session Included", "Cinematic Editing + Effects", "Pro Sound Design", "Full Content Planning", "Social Media Management", "Branding + Optimization", "Performance Report", "Priority Delivery"]; deliveryDays = 1; enabled = true });
+    nextPresetPackageId := 4;
+  };
+
+  public shared ({ caller }) func seedPageContent() : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) Runtime.trap("Unauthorized");
+    let pages : [PageContent] = [
       {
-        id = 1;
-        question = "How much does a brand ad film cost?";
-        answer = "Pricing starts from ₹10,000 for ad films under 1 minute.";
-        published = true;
+        pageId = "home";
+        heroTitle = "Medwin Montage";
+        heroSubtitle = "Crafting Stories, Capturing Moments";
+        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
+        sections = [
+          { id = "services"; heading = "Your Vision, My Edit"; description = "Full-service creative production"; imageUrl = ""; visible = true },
+          { id = "featured"; heading = "Featured Work"; description = "A curated selection of recent projects"; imageUrl = ""; visible = true },
+          { id = "stats"; heading = "Our Impact"; description = "Numbers that speak for themselves"; imageUrl = ""; visible = true },
+          { id = "brands"; heading = "Brands Worked With"; description = "Trusted by leading businesses across Thanjavur"; imageUrl = ""; visible = true },
+        ];
       },
       {
-        id = 2;
-        question = "Do you offer drone videography?";
-        answer = "Yes, aerial drone shots are included in select packages.";
-        published = true;
+        pageId = "about";
+        heroTitle = "About Medwin Montage";
+        heroSubtitle = "The story behind the lens";
+        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
+        sections = [
+          { id = "story"; heading = "Our Story"; description = "Medwin Montage is a freelance creative studio based in Thanjavur."; imageUrl = ""; visible = true },
+          { id = "mission"; heading = "Our Mission"; description = "Crafting visually compelling stories."; imageUrl = ""; visible = true },
+          { id = "skills"; heading = "Our Skills"; description = "From pre-production to final delivery."; imageUrl = ""; visible = true },
+        ];
       },
       {
-        id = 3;
-        question = "What is the turnaround time for projects?";
-        answer = "Delivery time varies by project size, 1-3 weeks is typical timeline.";
-        published = true;
+        pageId = "portfolio";
+        heroTitle = "Portfolio";
+        heroSubtitle = "A showcase of our finest cinematic work";
+        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
+        sections = [
+          { id = "reels"; heading = "Reels"; description = "Short-form video content for social media"; imageUrl = ""; visible = true },
+          { id = "ads"; heading = "Ads"; description = "Commercial and promotional videos"; imageUrl = ""; visible = true },
+          { id = "events"; heading = "Events"; description = "Event coverage and highlights"; imageUrl = ""; visible = true },
+          { id = "youtube"; heading = "YouTube Videos"; description = "Long-form YouTube content"; imageUrl = ""; visible = true },
+        ];
       },
       {
-        id = 4;
-        question = "Can you cover events outside Thanjavur?";
-        answer = "Yes, we travel and cover events across Tamil Nadu and South India.";
-        published = true;
+        pageId = "pricing";
+        heroTitle = "Pricing";
+        heroSubtitle = "Transparent pricing for every project";
+        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
+        sections = [
+          { id = "presets"; heading = "Preset Packages"; description = "Ready-made packages for every need"; imageUrl = ""; visible = true },
+          { id = "reel"; heading = "Per Reel Pricing"; description = "Pay per video with flexible options"; imageUrl = ""; visible = true },
+          { id = "monthly"; heading = "Monthly Package"; description = "Best value for consistent content"; imageUrl = ""; visible = true },
+          { id = "calculator"; heading = "Price Calculator"; description = "Build your custom package"; imageUrl = ""; visible = true },
+        ];
       },
       {
-        id = 5;
-        question = "Do you offer photo shoots as add-on service?";
-        answer = "Yes, both video and photo shoot packages available";
-        published = true;
+        pageId = "contact";
+        heroTitle = "Get in Touch";
+        heroSubtitle = "Let us discuss your next creative project";
+        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
+        sections = [
+          { id = "form"; heading = "Send Us a Message"; description = "Fill out the form below"; imageUrl = ""; visible = true },
+          { id = "details"; heading = "Contact Details"; description = "Reach us directly"; imageUrl = ""; visible = true },
+          { id = "location"; heading = "Our Location"; description = "Visit us in Thanjavur"; imageUrl = ""; visible = true },
+        ];
       },
       {
-        id = 6;
-        question = "What formats do you deliver final videos in?";
-        answer = "Delivery is digital download link, compatible with web & social media";
-        published = true;
+        pageId = "services";
+        heroTitle = "Our Services";
+        heroSubtitle = "Everything you need for your visual brand";
+        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
+        sections = [
+          { id = "list"; heading = "What We Offer"; description = "Professional creative services"; imageUrl = ""; visible = true },
+        ];
+      },
+      {
+        pageId = "digital-marketing";
+        heroTitle = "Digital Marketing";
+        heroSubtitle = "Grow your brand online";
+        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
+        sections = [
+          { id = "overview"; heading = "Digital Marketing Services"; description = "Full campaign execution"; imageUrl = ""; visible = true },
+        ];
+      },
+      {
+        pageId = "content-writing";
+        heroTitle = "Content Writing";
+        heroSubtitle = "Words that move, persuade, and convert";
+        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
+        sections = [
+          { id = "overview"; heading = "Content Writing Services"; description = "Professional copywriting"; imageUrl = ""; visible = true },
+        ];
+      },
+      {
+        pageId = "testimonials";
+        heroTitle = "Client Testimonials";
+        heroSubtitle = "What our clients say";
+        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
+        sections = [
+          { id = "reviews"; heading = "Client Reviews"; description = "Real feedback from our clients"; imageUrl = ""; visible = true },
+        ];
       },
     ];
-
-    for (faq in faqSeedData.values()) {
-      faqs.add(faq.id, faq);
+    for (page in pages.values()) {
+      pageContents.add(page.pageId, page);
     };
   };
 };

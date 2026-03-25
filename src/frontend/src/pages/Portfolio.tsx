@@ -1,298 +1,168 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Play } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { motion } from "motion/react";
 import PageHero from "../components/PageHero";
+import SectionTitle from "../components/SectionTitle";
+import { useGetPublishedVideos } from "../hooks/useQueries";
 
-const categories = [
-  "Video Editing",
-  "Cinematography",
-  "Reels & Short Content",
-  "Ads & Promotions",
-  "Before & After",
+const CATEGORIES = [
+  { key: "reels", label: "Reels" },
+  { key: "ads", label: "Ads" },
+  { key: "events", label: "Events" },
+  { key: "youtube", label: "YouTube Videos" },
 ];
 
-const gradients = [
-  "from-amber-900 via-orange-950 to-black",
-  "from-blue-950 via-slate-900 to-black",
-  "from-purple-950 via-slate-900 to-black",
-  "from-emerald-950 via-slate-900 to-black",
-  "from-rose-950 via-slate-900 to-black",
-  "from-cyan-950 via-slate-900 to-black",
-  "from-yellow-950 via-amber-950 to-black",
-  "from-fuchsia-950 via-slate-900 to-black",
-];
-
-const images = [
-  "/assets/generated/portfolio-editing.dim_800x500.jpg",
-  "/assets/generated/portfolio-cinematic.dim_800x500.jpg",
-  "/assets/generated/portfolio-reels.dim_800x500.jpg",
-  "/assets/generated/portfolio-ads.dim_800x500.jpg",
-];
-
-type ProjectItem = {
-  id: number;
-  title: string;
-  category: string;
-  img?: string | null;
-  gradient: string;
-};
-
-const allProjects: ProjectItem[] = [
+const FALLBACK_VIDEOS = [
   {
-    id: 1,
-    title: "Corporate Brand Film",
-    category: "Video Editing",
-    img: images[0],
-    gradient: gradients[0],
+    id: 0n,
+    vimeoId: "1176462678",
+    title: "Brand Reel 2024",
+    category: "reels",
+    description: "A cinematic brand reel showcasing visual storytelling.",
+    published: true,
   },
   {
-    id: 2,
-    title: "Wedding Cinematic",
-    category: "Video Editing",
-    gradient: gradients[1],
+    id: 1n,
+    vimeoId: "1176462651",
+    title: "Restaurant Ad",
+    category: "ads",
+    description: "Commercial advertisement for a local restaurant.",
+    published: true,
   },
   {
-    id: 3,
-    title: "Product Launch Edit",
-    category: "Video Editing",
-    gradient: gradients[2],
+    id: 2n,
+    vimeoId: "1176462632",
+    title: "Wedding Event Film",
+    category: "events",
+    description: "Beautiful wedding highlights film.",
+    published: true,
   },
   {
-    id: 4,
-    title: "Travel Documentary",
-    category: "Video Editing",
-    gradient: gradients[3],
+    id: 3n,
+    vimeoId: "1176462602",
+    title: "Product Launch Reel",
+    category: "reels",
+    description: "High-energy product launch reel.",
+    published: true,
   },
   {
-    id: 5,
-    title: "Music Video Edit",
-    category: "Video Editing",
-    gradient: gradients[4],
-  },
-  {
-    id: 6,
-    title: "Short Film Post",
-    category: "Video Editing",
-    gradient: gradients[5],
-  },
-  {
-    id: 7,
-    title: "Cityscape Aerial",
-    category: "Cinematography",
-    img: images[1],
-    gradient: gradients[1],
-  },
-  {
-    id: 8,
-    title: "Golden Hour Shoot",
-    category: "Cinematography",
-    gradient: gradients[0],
-  },
-  {
-    id: 9,
-    title: "Studio Portrait Film",
-    category: "Cinematography",
-    gradient: gradients[6],
-  },
-  {
-    id: 10,
-    title: "Event Cinematography",
-    category: "Cinematography",
-    gradient: gradients[3],
-  },
-  {
-    id: 11,
-    title: "Fitness Brand Reel",
-    category: "Reels & Short Content",
-    img: images[2],
-    gradient: gradients[2],
-  },
-  {
-    id: 12,
-    title: "Food Styling Reel",
-    category: "Reels & Short Content",
-    gradient: gradients[4],
-  },
-  {
-    id: 13,
-    title: "Fashion Reel",
-    category: "Reels & Short Content",
-    gradient: gradients[7],
-  },
-  {
-    id: 14,
-    title: "Lifestyle Content",
-    category: "Reels & Short Content",
-    gradient: gradients[5],
-  },
-  {
-    id: 15,
-    title: "Product TVC",
-    category: "Ads & Promotions",
-    img: images[3],
-    gradient: gradients[0],
-  },
-  {
-    id: 16,
-    title: "Brand Commercial",
-    category: "Ads & Promotions",
-    gradient: gradients[6],
-  },
-  {
-    id: 17,
-    title: "Promotional Reel",
-    category: "Ads & Promotions",
-    gradient: gradients[3],
-  },
-  {
-    id: 18,
-    title: "Social Media Ad",
-    category: "Ads & Promotions",
-    gradient: gradients[2],
+    id: 4n,
+    vimeoId: "1176462586",
+    title: "YouTube Channel Intro",
+    category: "youtube",
+    description: "Channel intro video for a YouTube creator.",
+    published: true,
   },
 ];
-
-const beforeAfterPairs = [
-  { title: "Wedding Highlight", before: gradients[1], after: gradients[0] },
-  { title: "Product Shoot", before: gradients[5], after: gradients[3] },
-  { title: "Event Coverage", before: gradients[7], after: gradients[2] },
-];
-
-function ProjectCard({
-  project,
-  index,
-}: { project: ProjectItem; index: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.35, delay: index * 0.05 }}
-      className="relative rounded-sm overflow-hidden card-cinematic cursor-pointer gold-border group"
-      data-ocid={`portfolio.item.${index + 1}`}
-    >
-      <div className="aspect-video relative overflow-hidden">
-        {project.img ? (
-          <img
-            src={project.img}
-            alt={project.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div
-            className={`w-full h-full bg-gradient-to-br ${project.gradient}`}
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="play-btn">
-            <Play
-              className="w-5 h-5 text-primary-foreground ml-0.5"
-              fill="currentColor"
-            />
-          </div>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 p-3">
-          <span className="text-xs text-gold uppercase tracking-wider font-sans-ui">
-            {project.category}
-          </span>
-          <h3 className="font-display text-sm font-semibold text-foreground mt-0.5">
-            {project.title}
-          </h3>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
 
 export default function Portfolio() {
-  const [activeTab, setActiveTab] = useState("Video Editing");
+  const { data: backendVideos } = useGetPublishedVideos();
+  const videos =
+    backendVideos && backendVideos.length > 0 ? backendVideos : FALLBACK_VIDEOS;
 
   return (
     <div>
       <PageHero
-        title="Our Portfolio"
-        subtitle="A curated collection of work across every creative discipline"
-        accent="Creative Work"
+        title="Portfolio"
+        subtitle="Real work. Real results. Watch our projects in action."
+        accent="Our Work"
       />
 
-      <section className="py-16 bg-background">
+      <section className="py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <SectionTitle accent="Categories" title="Browse By Category" />
+
+          <Tabs defaultValue="reels" className="mt-12">
             <TabsList
-              className="flex flex-wrap h-auto gap-2 bg-card border border-border p-2 rounded-sm mb-10"
+              className="bg-card border border-border mb-10 flex-wrap h-auto gap-1 p-1"
               data-ocid="portfolio.tab"
             >
-              {categories.map((cat) => (
+              {CATEGORIES.map((cat) => (
                 <TabsTrigger
-                  key={cat}
-                  value={cat}
-                  className="text-xs uppercase tracking-widest data-[state=active]:bg-gold data-[state=active]:text-primary-foreground rounded-sm px-4 py-2"
+                  key={cat.key}
+                  value={cat.key}
+                  className="text-xs uppercase tracking-widest data-[state=active]:bg-gold data-[state=active]:text-primary-foreground"
                   data-ocid="portfolio.tab"
                 >
-                  {cat}
+                  {cat.label}
                 </TabsTrigger>
               ))}
             </TabsList>
 
-            {categories.slice(0, -1).map((cat) => (
-              <TabsContent key={cat} value={cat}>
-                <AnimatePresence mode="wait">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {allProjects
-                      .filter((p) => p.category === cat)
-                      .map((project, i) => (
-                        <ProjectCard
-                          key={project.id}
-                          project={project}
-                          index={i}
-                        />
-                      ))}
-                  </div>
-                </AnimatePresence>
-              </TabsContent>
-            ))}
-
-            <TabsContent value="Before & After">
-              <div className="grid md:grid-cols-3 gap-8">
-                {beforeAfterPairs.map((pair, i) => (
+            {CATEGORIES.map((cat) => {
+              const catVideos = videos.filter(
+                (v) => v.category.toLowerCase() === cat.key.toLowerCase(),
+              );
+              const catDescriptions: Record<string, string> = {
+                reels:
+                  "Short-form vertical videos crafted for maximum engagement on Instagram, TikTok & YouTube Shorts.",
+                ads: "Commercial & promotional content designed to convert — product showcases, brand films & ad campaigns.",
+                events:
+                  "Event coverage & cinematic highlights — weddings, corporate events, launches & celebrations.",
+                youtube:
+                  "Long-form content for YouTube — vlogs, brand documentaries, tutorials & channel series.",
+              };
+              return (
+                <TabsContent key={cat.key} value={cat.key}>
                   <motion.div
-                    key={pair.title}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="gold-border rounded-sm overflow-hidden"
+                    transition={{ duration: 0.4 }}
+                    className="p-10 bg-card border border-gold/30 rounded-sm gold-border flex flex-col items-center text-center gap-6"
+                    data-ocid="portfolio.item.1"
                   >
-                    <div className="p-4 bg-card border-b border-border">
-                      <h3 className="font-display text-sm font-semibold uppercase tracking-wide">
-                        {pair.title}
+                    <div className="w-16 h-16 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center">
+                      <Play className="w-7 h-7 text-gold" fill="currentColor" />
+                    </div>
+                    <div>
+                      <h3 className="font-display text-2xl font-bold text-foreground uppercase tracking-widest mb-3">
+                        {cat.label}
                       </h3>
+                      <p className="text-muted-foreground max-w-md leading-relaxed">
+                        {catDescriptions[cat.key] ||
+                          "Premium video content in this category."}
+                      </p>
                     </div>
-                    <div className="flex">
-                      <div className="flex-1 relative">
-                        <div
-                          className={`aspect-video bg-gradient-to-br ${pair.before}`}
-                        />
-                        <div className="absolute top-2 left-2 bg-black/70 text-xs text-muted-foreground px-2 py-0.5 rounded uppercase tracking-wide">
-                          Before
-                        </div>
-                      </div>
-                      <div className="w-px bg-gold/50" />
-                      <div className="flex-1 relative">
-                        <div
-                          className={`aspect-video bg-gradient-to-br ${pair.after}`}
-                        />
-                        <div className="absolute top-2 right-2 bg-black/70 text-xs text-gold px-2 py-0.5 rounded uppercase tracking-wide">
-                          After
-                        </div>
-                      </div>
+                    <div className="text-xs border border-gold/40 text-gold px-4 py-1.5 rounded-full uppercase tracking-widest">
+                      {catVideos.length}{" "}
+                      {catVideos.length === 1 ? "project" : "projects"}{" "}
+                      available
                     </div>
+                    <a
+                      href="https://wa.me/919487897160"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-gold/10 border border-gold/40 text-gold px-6 py-2.5 text-sm font-semibold uppercase tracking-widest hover:bg-gold/20 rounded-sm transition-all"
+                      data-ocid="portfolio.primary_button"
+                    >
+                      Request {cat.label} Project
+                    </a>
                   </motion.div>
-                ))}
-              </div>
-            </TabsContent>
+                </TabsContent>
+              );
+            })}
           </Tabs>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-16 bg-gold/10 border-y border-gold/30 text-center">
+        <div className="max-w-2xl mx-auto px-4">
+          <h2 className="font-display text-2xl font-bold text-foreground uppercase mb-4">
+            Want to be our next project?
+          </h2>
+          <p className="text-muted-foreground mb-8">
+            Let's discuss your vision and create something remarkable.
+          </p>
+          <a
+            href="https://wa.me/919487897160"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-gold text-primary-foreground px-8 py-4 text-sm font-semibold uppercase tracking-widest hover:bg-gold-light transition-all rounded-sm"
+            data-ocid="portfolio.primary_button"
+          >
+            Start Your Project
+          </a>
         </div>
       </section>
     </div>

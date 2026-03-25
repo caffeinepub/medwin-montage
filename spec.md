@@ -1,45 +1,40 @@
-# Medwin Montage
+# Medwin Montage — Version 6
 
 ## Current State
-A multi-page cinematic portfolio website for Medwin Montage (video editing / cinematography studio in Tamil Nadu). Has: Home, About, Portfolio, Services, Digital Marketing, Content Writing, Testimonials, Pricing, Contact pages. Backend has basic contact form submission, FAQ, and testimonial storage. No admin panel. Location shows "Tamil Nadu, India" (needs Thanjavur).
+Full-stack portfolio site with Motoko backend + React frontend. Backend has: portfolio videos, brands, services, pricing plans, testimonials, FAQs, contact enquiries (without selectedPlan), office profile, page content, preset packages, reel pricing, monthly package, slider rates, site stats. Frontend has all pages including admin panel.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Password-protected admin login at `/admin` using authorization component
-- Admin dashboard with tabs for: Portfolio Videos, Brands, Services, Pricing Plans, Testimonials, FAQs, Contact Enquiries, Office Profile
-- Full CRUD (add, edit, remove, publish/unpublish) for each content type
-- Sample Projects page/section with 5 embedded Vimeo videos
-- Brands section with 7 real Thanjavur brands (Beef Boss, Anand Saloon, Thanjai Car Accessories, Kolapasi Restaurant, My Thanjai, Elto Landscapes, Abi Kowsa)
-- Admin "Received Enquiries" tab to view all contact form submissions
-- Office Profile CRUD: edit contact email, phone, address, WhatsApp, social links
-- Publish toggle on all content so only published items show publicly
+- `selectedPlan` field to `ContactEnquiry` type and `submitContactEnquiry` function
+- Favicon using the uploaded M logo image (`/assets/uploads/chatgpt_image_mar_25_2026_09_20_23_am-removebg-preview-019d2321-fedb-7422-b14e-7a3fc0f63f2a-1.png`)
+- Portfolio cards displayed in 9:16 vertical ratio (1080x1920 aspect)
+- Skills section with progress bars, dynamic fill color by % (low=muted, mid=amber, high=gold)
+- Book Now flow: click → navigate to /contact with `?plan=PlanName` query param → pre-fill form → on submit redirect to WhatsApp with plan+details
+- Admin enquiries: show selectedPlan, add "Download XLSX" button
 
 ### Modify
-- Fix location from "Tamil Nadu, India" to "Thanjavur, Tamil Nadu, India" everywhere (Contact page, footer, Layout)
-- Portfolio page: load published videos from backend instead of static data
-- Home page brands section: load published brands from backend
-- Testimonials page: load published testimonials from backend
-- Contact page: load FAQs from backend, show published office profile details
+- `ContactEnquiry`: add `selectedPlan: Text` field
+- `submitContactEnquiry`: add `selectedPlan` parameter
+- Portfolio page: Browse By Category shows only category cards/labels, no embedded videos
+- About page: remove Sony A7 III & lens kit and DJI drone aerials from equipment list
+- Pricing: update preset packages to exact specs:
+  - Basic ₹3,099 – Delivery 2-3 days – 7 Videos, Basic Cuts, Color Correction, 2 Captions+Script Ideas, Posting Guidance
+  - Standard ₹7,999 – Delivery 1-1.5 days – 10 Videos, Advanced Color Grading, Sound Design, 4 Captions+Script Writing, Hashtag Strategy, Social Media Handling, Basic Growth Strategy
+  - Premium ₹9,999 – Delivery 0.5 day High Priority – 15 Videos, Shoot Session, Cinematic Editing+Effects, Pro Sound Design, Full Content Planning, Social Media Management, Branding+Optimization, Performance Report, Priority Delivery
+- Admin enquiries tab: display selectedPlan per enquiry, add download as .xlsx button
+- Admin panel: fix all broken error/success messages
+- Seed data: update preset packages with new values
 
 ### Remove
-- Static hardcoded brands on Home page (replace with backend-driven)
-- Static fallback projects on Portfolio (keep as fallback only)
+- Sony A7 III & DJI drone from About page equipment section
+- Embedded videos from Browse By Category section on Portfolio page
 
 ## Implementation Plan
-1. Select `authorization` component for admin login
-2. Generate Motoko backend with:
-   - PortfolioVideo: id, title, category, vimeoId, description, published
-   - Brand: id, name, category, location, description, mapsUrl, published
-   - Service: id, title, description, features, published
-   - PricingPlan: id, label, price, note, published
-   - Testimonial: id, clientName, company, review, rating, published
-   - FAQItem: id, question, answer, published
-   - ContactEnquiry: id, name, email, phone, message, timestamp
-   - OfficeProfile: email, phone, whatsapp, address, city, mapsUrl
-   - Full CRUD for all, admin-only writes, public reads (published only)
-3. Build frontend:
-   - Admin login page at /admin with password auth
-   - Admin dashboard with 8 tabs, each with add/edit/delete/publish controls
-   - Public pages updated to use backend data
-   - Location fixed everywhere to Thanjavur, Tamil Nadu, India
+1. Update backend: add `selectedPlan` to `ContactEnquiry`, update `submitContactEnquiry(name, email, phone, message, selectedPlan)`, update seedData preset packages with new values
+2. Update `index.html` favicon to use uploaded M logo
+3. Update `Portfolio.tsx`: Browse By Category shows only category name tiles (no video iframes), Featured Work cards in 9:16 aspect ratio
+4. Update `About.tsx`: remove equipment items (Sony A7 III, DJI drone), add skills progress bars with dynamic fill colors
+5. Update `Pricing.tsx`: preset packages with exact new details; Book Now button navigates to /contact?plan=PlanName
+6. Update `Contact.tsx`: read `?plan` query param, pre-fill hidden field in form, on submit redirect to WhatsApp with plan+details
+7. Update `Admin.tsx`: enquiries tab shows selectedPlan, add xlsx download using json-to-sheet approach (SheetJS/xlsx or manual CSV fallback), fix error message states
