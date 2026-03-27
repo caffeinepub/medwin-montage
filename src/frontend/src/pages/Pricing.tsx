@@ -185,17 +185,45 @@ export default function Pricing() {
           {/* Season offer banner or post-offer message */}
           {isOfferActive && (
             <div className="text-center mt-6 mb-2">
-              <p className="text-gold text-sm font-semibold mb-2">
-                🎉 Season Offer — Save ₹1,000 on Pro &amp; Premium! Ends April
-                10th
+              <p className="text-gold text-base font-bold mb-6">
+                🎉 Season Offer — Save ₹1,000 on Pro &amp; Premium! Offer ends{" "}
+                <span className="text-red-500">April 10th</span>
               </p>
               {!countdown.done && (
-                <p className="text-gold font-mono text-sm">
-                  {countdown.days}d {String(countdown.hours).padStart(2, "0")}h{" "}
-                  {String(countdown.minutes).padStart(2, "0")}m{" "}
-                  {String(countdown.seconds).padStart(2, "0")}s
-                </p>
+                <div className="flex items-center justify-center gap-3 sm:gap-4">
+                  {[
+                    { value: countdown.days, label: "DAYS" },
+                    { value: countdown.hours, label: "HRS" },
+                    { value: countdown.minutes, label: "MIN" },
+                    { value: countdown.seconds, label: "SEC" },
+                  ].map((unit, i) => (
+                    <div key={unit.label} className="flex items-center">
+                      <motion.div
+                        key={`${unit.label}-${unit.value}`}
+                        initial={{ scale: 1.15 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex flex-col items-center bg-red-950 border-2 border-red-600 rounded-sm px-3 py-2 sm:px-5 sm:py-3 min-w-[64px] sm:min-w-[80px] shadow-lg shadow-red-900/40"
+                      >
+                        <span className="font-display text-4xl sm:text-5xl font-black text-red-500 leading-none tabular-nums">
+                          {String(unit.value).padStart(2, "0")}
+                        </span>
+                        <span className="text-[10px] sm:text-xs text-red-400 font-bold uppercase tracking-widest mt-1">
+                          {unit.label}
+                        </span>
+                      </motion.div>
+                      {i < 3 && (
+                        <span className="text-red-500 text-3xl font-black mx-1 sm:mx-2 leading-none">
+                          :
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
+              <p className="text-red-400 text-xs font-semibold mt-4 uppercase tracking-widest animate-pulse">
+                ⚠ Offer expires soon — grab it before it&apos;s gone!
+              </p>
             </div>
           )}
 
