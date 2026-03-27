@@ -1,6 +1,7 @@
+import { Link } from "@tanstack/react-router";
 import { CheckCircle, MessageCircle } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
@@ -28,7 +29,7 @@ const FALLBACK_PRESETS = [
   },
   {
     id: 2n,
-    name: "Standard",
+    name: "Pro",
     price: 7999n,
     features: [
       "10 Video Edits (Reels/Shorts/Videos)",
@@ -64,7 +65,7 @@ const FALLBACK_PRESETS = [
 
 function getDeliveryLabel(pkg: { name: string; deliveryDays: bigint }): string {
   if (pkg.name === "Basic") return "Delivery in 2–3 days";
-  if (pkg.name === "Standard") return "Delivery in 1–1½ days";
+  if (pkg.name === "Pro") return "Delivery in 1–1½ days";
   if (pkg.name === "Premium") return "Delivery in ½ day — High Priority ⚡";
   return `Delivery in ${Number(pkg.deliveryDays)} days`;
 }
@@ -87,12 +88,45 @@ const FALLBACK_SLIDER = {
   other: 500n,
 };
 
+// Season offers: planName -> { originalPrice, discountedPrice }
+const SEASON_OFFERS: Record<string, { original: number; discounted: number }> =
+  {
+    Pro: { original: 7999, discounted: 6999 },
+    Premium: { original: 9999, discounted: 8999 },
+  };
+
+const OFFER_END = new Date("2026-04-10T23:59:59");
+const POST_OFFER_WINDOW_END = new Date("2026-04-20T23:59:59");
+
 function WhatsAppLink(msg: string) {
   return `https://wa.me/919487897160?text=${encodeURIComponent(msg)}`;
 }
 
 function fmt(n: bigint | number) {
   return `₹${Number(n).toLocaleString("en-IN")}`;
+}
+
+function useCountdown(target: Date) {
+  const [timeLeft, setTimeLeft] = useState(() =>
+    Math.max(0, target.getTime() - Date.now()),
+  );
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const remaining = Math.max(0, target.getTime() - Date.now());
+      setTimeLeft(remaining);
+      if (remaining <= 0) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [target]);
+
+  const totalSeconds = Math.floor(timeLeft / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return { days, hours, minutes, seconds, done: timeLeft <= 0 };
 }
 
 export default function Pricing() {
@@ -108,6 +142,12 @@ export default function Pricing() {
   const reel = reelPricing ?? FALLBACK_REEL;
   const monthly = monthlyPkg ?? FALLBACK_MONTHLY;
   const rates = sliderRates ?? FALLBACK_SLIDER;
+
+  const now = new Date();
+  const isOfferActive = now < OFFER_END;
+  const isPostOfferWindow = now >= OFFER_END && now < POST_OFFER_WINDOW_END;
+
+  const countdown = useCountdown(OFFER_END);
 
   // Slider state
   const [editingQty, setEditingQty] = useState(5);
@@ -137,15 +177,51 @@ export default function Pricing() {
       <section className="py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <SectionTitle
-            accent="Packages"
-            title="Preset Packages"
+            accent="Plans"
+            title="Choose Your Plan"
             subtitle="All-inclusive plans for consistent content creators"
           />
+
+          {/* Season offer banner or post-offer message */}
+          {isOfferActive && (
+            <div className="text-center mt-6 mb-2">
+              <p className="text-gold text-sm font-semibold mb-2">
+                🎉 Season Offer — Save ₹1,000 on Pro &amp; Premium! Ends April
+                10th
+              </p>
+              {!countdown.done && (
+                <p className="text-gold font-mono text-sm">
+                  {countdown.days}d {String(countdown.hours).padStart(2, "0")}h{" "}
+                  {String(countdown.minutes).padStart(2, "0")}m{" "}
+                  {String(countdown.seconds).padStart(2, "0")}s
+                </p>
+              )}
+            </div>
+          )}
+
+          {isPostOfferWindow && (
+            <div className="mt-6 mb-2 mx-auto max-w-2xl p-5 bg-black border border-gold/60 rounded-sm text-center">
+              <p className="text-foreground text-sm">
+                You just missed our Season Offer that ended April 10th — but
+                you&apos;re early enough to get a special deal that no other
+                editor or freelancer can match.{" "}
+                <Link
+                  to="/contact"
+                  className="text-gold underline font-semibold hover:text-gold-light"
+                >
+                  Contact us!
+                </Link>
+              </p>
+            </div>
+          )}
+
           <div className="grid md:grid-cols-3 gap-6 lg:gap-8 mt-12 items-stretch">
             {presets
               .filter((p) => p.enabled)
               .map((pkg, i) => {
                 const isHighlight = i === 1;
+                const offer = SEASON_OFFERS[pkg.name];
+                const showOffer = isOfferActive && !!offer;
                 return (
                   <motion.div
                     key={String(pkg.id)}
@@ -160,6 +236,13 @@ export default function Pricing() {
                     }`}
                     data-ocid={`pricing.item.${i + 1}`}
                   >
+                    {/* Season offer badge — absolute top-left */}
+                    {showOffer && (
+                      <div className="absolute top-0 left-0 bg-red-600 text-white text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-tl-sm rounded-br-sm z-10">
+                        🎉 Season Offer
+                      </div>
+                    )}
+
                     {isHighlight && (
                       <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                         <span className="bg-gold text-primary-foreground text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full">
@@ -167,7 +250,9 @@ export default function Pricing() {
                         </span>
                       </div>
                     )}
-                    <div className="text-center mb-8">
+                    <div
+                      className={`text-center mb-8 ${showOffer ? "pt-6" : ""}`}
+                    >
                       <h3
                         className={`font-display text-2xl font-bold uppercase tracking-widest mb-4 ${
                           isHighlight ? "text-gold" : "text-foreground"
@@ -175,9 +260,25 @@ export default function Pricing() {
                       >
                         {pkg.name}
                       </h3>
-                      <div className="font-display text-4xl font-bold text-foreground">
-                        {fmt(pkg.price)}
-                      </div>
+                      {showOffer ? (
+                        <div>
+                          <div className="flex items-center justify-center gap-3">
+                            <span className="font-display text-2xl text-muted-foreground line-through">
+                              {fmt(BigInt(offer!.original))}
+                            </span>
+                            <span className="font-display text-4xl font-bold text-gold">
+                              {fmt(BigInt(offer!.discounted))}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gold/80 mt-1">
+                            Save ₹1,000 — Limited Time!
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="font-display text-4xl font-bold text-foreground">
+                          {fmt(pkg.price)}
+                        </div>
+                      )}
                       <p className="text-xs text-muted-foreground mt-2">
                         {getDeliveryLabel(pkg)}
                       </p>
@@ -346,7 +447,7 @@ export default function Pricing() {
       )}
 
       {/* DYNAMIC CALCULATOR */}
-      <section className="py-24 bg-charcoal-light">
+      <section id="customised-plan" className="py-24 bg-charcoal-light">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <SectionTitle
             accent="Custom"
@@ -447,6 +548,22 @@ export default function Pricing() {
           </motion.div>
         </div>
       </section>
+
+      {/* Floating button — scroll to customised plan */}
+      <div className="fixed bottom-6 left-6 z-50">
+        <button
+          type="button"
+          onClick={() => {
+            document
+              .getElementById("customised-plan")
+              ?.scrollIntoView({ behavior: "smooth" });
+          }}
+          className="bg-gold text-black text-xs font-bold uppercase tracking-widest px-5 py-3 rounded-full shadow-lg hover:opacity-90 transition-all flex items-center gap-2"
+          data-ocid="pricing.secondary_button"
+        >
+          <span>✦</span> Make Your Customised Plan
+        </button>
+      </div>
     </div>
   );
 }

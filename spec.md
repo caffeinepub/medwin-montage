@@ -1,40 +1,40 @@
-# Medwin Montage — Version 6
+# Medwin Montage – Pricing Page Update (Version 13)
 
 ## Current State
-Full-stack portfolio site with Motoko backend + React frontend. Backend has: portfolio videos, brands, services, pricing plans, testimonials, FAQs, contact enquiries (without selectedPlan), office profile, page content, preset packages, reel pricing, monthly package, slider rates, site stats. Frontend has all pages including admin panel.
+- Pricing section heading: "Preset Packages"
+- Middle plan name: "Standard"
+- Season offer badge: gold background, positioned inline in plan box
+- No countdown timer
+- No post-offer message window
+- No floating "Customised Plan" button
+- Customised plan (calculator) is at the bottom of the page
 
 ## Requested Changes (Diff)
 
 ### Add
-- `selectedPlan` field to `ContactEnquiry` type and `submitContactEnquiry` function
-- Favicon using the uploaded M logo image (`/assets/uploads/chatgpt_image_mar_25_2026_09_20_23_am-removebg-preview-019d2321-fedb-7422-b14e-7a3fc0f63f2a-1.png`)
-- Portfolio cards displayed in 9:16 vertical ratio (1080x1920 aspect)
-- Skills section with progress bars, dynamic fill color by % (low=muted, mid=amber, high=gold)
-- Book Now flow: click → navigate to /contact with `?plan=PlanName` query param → pre-fill form → on submit redirect to WhatsApp with plan+details
-- Admin enquiries: show selectedPlan, add "Download XLSX" button
+- Countdown timer below "Choose Your Plan" heading, counting down to April 10, 2026 midnight
+- Season offer subtext: "🎉 Season Offer — Save ₹1,000 on Pro & Premium! Ends April 10th"
+- After offer ends (April 10): automatically hide season offer badges/prices; show post-offer message for 10 days: "You just missed our Season Offer that ended April 10th — but you're early enough to get a special deal that no other editor or freelancer can match. Contact us!"
+- After 10 days post-offer (April 20): hide everything offer-related
+- Floating bottom-left button: "Make Your Customised Plan" — clicking smooth-scrolls to calculator section
+- Season offer badge: red filled background (#dc2626), white text, positioned absolute top-left corner of plan card
 
 ### Modify
-- `ContactEnquiry`: add `selectedPlan: Text` field
-- `submitContactEnquiry`: add `selectedPlan` parameter
-- Portfolio page: Browse By Category shows only category cards/labels, no embedded videos
-- About page: remove Sony A7 III & lens kit and DJI drone aerials from equipment list
-- Pricing: update preset packages to exact specs:
-  - Basic ₹3,099 – Delivery 2-3 days – 7 Videos, Basic Cuts, Color Correction, 2 Captions+Script Ideas, Posting Guidance
-  - Standard ₹7,999 – Delivery 1-1.5 days – 10 Videos, Advanced Color Grading, Sound Design, 4 Captions+Script Writing, Hashtag Strategy, Social Media Handling, Basic Growth Strategy
-  - Premium ₹9,999 – Delivery 0.5 day High Priority – 15 Videos, Shoot Session, Cinematic Editing+Effects, Pro Sound Design, Full Content Planning, Social Media Management, Branding+Optimization, Performance Report, Priority Delivery
-- Admin enquiries tab: display selectedPlan per enquiry, add download as .xlsx button
-- Admin panel: fix all broken error/success messages
-- Seed data: update preset packages with new values
+- Section heading "Preset Packages" → "Choose Your Plan"
+- SectionTitle accent/title updated accordingly
+- Middle plan name "Standard" → "Pro" (in FALLBACK_PRESETS, SEASON_OFFERS key, and display)
+- Season offer badge style: from gold/20 border to solid red background with white text, repositioned to absolute top-left of card
 
 ### Remove
-- Sony A7 III & DJI drone from About page equipment section
-- Embedded videos from Browse By Category section on Portfolio page
+- Old inline season offer badge placement (centered above price)
 
 ## Implementation Plan
-1. Update backend: add `selectedPlan` to `ContactEnquiry`, update `submitContactEnquiry(name, email, phone, message, selectedPlan)`, update seedData preset packages with new values
-2. Update `index.html` favicon to use uploaded M logo
-3. Update `Portfolio.tsx`: Browse By Category shows only category name tiles (no video iframes), Featured Work cards in 9:16 aspect ratio
-4. Update `About.tsx`: remove equipment items (Sony A7 III, DJI drone), add skills progress bars with dynamic fill colors
-5. Update `Pricing.tsx`: preset packages with exact new details; Book Now button navigates to /contact?plan=PlanName
-6. Update `Contact.tsx`: read `?plan` query param, pre-fill hidden field in form, on submit redirect to WhatsApp with plan+details
-7. Update `Admin.tsx`: enquiries tab shows selectedPlan, add xlsx download using json-to-sheet approach (SheetJS/xlsx or manual CSV fallback), fix error message states
+1. Update FALLBACK_PRESETS name "Standard" → "Pro"
+2. Update SEASON_OFFERS key "Standard" → "Pro"
+3. Change SectionTitle to "Choose Your Plan"
+4. Add offer state logic: isOfferActive (before Apr 10), isPostOfferWindow (Apr 10–20), showNothing (after Apr 20)
+5. Add countdown timer component (days/hours/minutes/seconds) shown when isOfferActive
+6. Add subtext line about season offer end date
+7. Reposition season offer badge to absolute top-left of card with red filled bg + white text
+8. Add post-offer message banner when isPostOfferWindow
+9. Add floating bottom-left button that smooth-scrolls to calculator section (add id to that section)
