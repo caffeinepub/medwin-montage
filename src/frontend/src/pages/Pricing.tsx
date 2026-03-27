@@ -29,7 +29,7 @@ const FALLBACK_PRESETS = [
   },
   {
     id: 2n,
-    name: "Pro",
+    name: "Standard",
     price: 7999n,
     features: [
       "10 Video Edits (Reels/Shorts/Videos)",
@@ -65,7 +65,7 @@ const FALLBACK_PRESETS = [
 
 function getDeliveryLabel(pkg: { name: string; deliveryDays: bigint }): string {
   if (pkg.name === "Basic") return "Delivery in 2–3 days";
-  if (pkg.name === "Pro") return "Delivery in 1–1½ days";
+  if (pkg.name === "Standard") return "Delivery in 1–1½ days";
   if (pkg.name === "Premium") return "Delivery in ½ day — High Priority ⚡";
   return `Delivery in ${Number(pkg.deliveryDays)} days`;
 }
@@ -91,7 +91,7 @@ const FALLBACK_SLIDER = {
 // Season offers: planName -> { originalPrice, discountedPrice }
 const SEASON_OFFERS: Record<string, { original: number; discounted: number }> =
   {
-    Pro: { original: 7999, discounted: 6999 },
+    Standard: { original: 7999, discounted: 6999 },
     Premium: { original: 9999, discounted: 8999 },
   };
 
@@ -182,49 +182,66 @@ export default function Pricing() {
             subtitle="All-inclusive plans for consistent content creators"
           />
 
-          {/* Season offer banner or post-offer message */}
+          {/* ── OFFER INFO CARD ── */}
           {isOfferActive && (
-            <div className="text-center mt-6 mb-2">
-              <p className="text-gold text-base font-bold mb-6">
-                🎉 Season Offer — Save ₹1,000 on Pro &amp; Premium! Offer ends{" "}
-                <span className="text-red-500">April 10th</span>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="mt-8 mx-auto max-w-3xl border border-red-700 bg-black rounded-lg px-8 py-6"
+              data-ocid="pricing.panel"
+            >
+              {/* Title */}
+              <p className="text-center text-xl font-black uppercase text-red-500 tracking-wide">
+                🎉 SEASON OFFER — SAVE ₹1,000 ON PRO &amp; PREMIUM!
               </p>
+              {/* Subtitle */}
+              <p className="text-center text-sm text-muted-foreground mt-1">
+                Valid until April 10, 2026
+              </p>
+
+              {/* Countdown row */}
               {!countdown.done && (
-                <div className="flex items-center justify-center gap-3 sm:gap-4">
-                  {[
-                    { value: countdown.days, label: "DAYS" },
-                    { value: countdown.hours, label: "HRS" },
-                    { value: countdown.minutes, label: "MIN" },
-                    { value: countdown.seconds, label: "SEC" },
-                  ].map((unit, i) => (
-                    <div key={unit.label} className="flex items-center">
-                      <motion.div
-                        key={`${unit.label}-${unit.value}`}
-                        initial={{ scale: 1.15 }}
-                        animate={{ scale: 1 }}
-                        transition={{ duration: 0.2 }}
-                        className="flex flex-col items-center bg-red-950 border-2 border-red-600 rounded-sm px-3 py-2 sm:px-5 sm:py-3 min-w-[64px] sm:min-w-[80px] shadow-lg shadow-red-900/40"
-                      >
-                        <span className="font-display text-4xl sm:text-5xl font-black text-red-500 leading-none tabular-nums">
-                          {String(unit.value).padStart(2, "0")}
-                        </span>
-                        <span className="text-[10px] sm:text-xs text-red-400 font-bold uppercase tracking-widest mt-1">
-                          {unit.label}
-                        </span>
-                      </motion.div>
-                      {i < 3 && (
-                        <span className="text-red-500 text-3xl font-black mx-1 sm:mx-2 leading-none">
-                          :
-                        </span>
-                      )}
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between mt-5 flex-wrap gap-4">
+                  {/* Left label */}
+                  <span className="text-xs text-gray-400 uppercase tracking-widest whitespace-nowrap">
+                    OFFER ENDS IN
+                  </span>
+
+                  {/* Countdown boxes */}
+                  <div className="flex items-center gap-2">
+                    {[
+                      { value: countdown.days, label: "DAYS" },
+                      { value: countdown.hours, label: "HRS" },
+                      { value: countdown.minutes, label: "MIN" },
+                      { value: countdown.seconds, label: "SEC" },
+                    ].map((unit, i) => (
+                      <div key={unit.label} className="flex items-center">
+                        <motion.div
+                          key={`${unit.label}-${unit.value}`}
+                          initial={{ scale: 1.12 }}
+                          animate={{ scale: 1 }}
+                          transition={{ duration: 0.18 }}
+                          className="bg-black border border-red-700 rounded px-4 py-2 min-w-[64px] text-center"
+                        >
+                          <span className="block text-3xl font-black text-red-500 tabular-nums leading-none">
+                            {String(unit.value).padStart(2, "0")}
+                          </span>
+                          <span className="block text-[10px] text-gray-400 uppercase tracking-widest mt-1">
+                            {unit.label}
+                          </span>
+                        </motion.div>
+                        {i < 3 && (
+                          <span className="text-red-500 text-2xl font-black mx-1 leading-none">
+                            :
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
-              <p className="text-red-400 text-xs font-semibold mt-4 uppercase tracking-widest animate-pulse">
-                ⚠ Offer expires soon — grab it before it&apos;s gone!
-              </p>
-            </div>
+            </motion.div>
           )}
 
           {isPostOfferWindow && (
@@ -298,7 +315,7 @@ export default function Pricing() {
                               {fmt(BigInt(offer!.discounted))}
                             </span>
                           </div>
-                          <p className="text-xs text-gold/80 mt-1">
+                          <p className="text-xs text-green-400 mt-1 font-semibold">
                             Save ₹1,000 — Limited Time!
                           </p>
                         </div>
@@ -307,7 +324,7 @@ export default function Pricing() {
                           {fmt(pkg.price)}
                         </div>
                       )}
-                      <p className="text-xs text-muted-foreground mt-2">
+                      <p className="text-xs text-orange-400 mt-2 font-medium">
                         {getDeliveryLabel(pkg)}
                       </p>
                     </div>
