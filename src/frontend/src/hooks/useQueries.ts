@@ -825,3 +825,136 @@ export function useIsAdmin() {
     enabled: !!actor && !isFetching,
   });
 }
+
+// ─── Full Pricing Plans ────────────────────────────────────────────────────
+
+export function useGetAllFullPricingPlans() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["full-pricing", "all"],
+    queryFn: async () => {
+      if (!actor) return [];
+      try {
+        return await actor.getAllFullPricingPlans();
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetEnabledFullPricingPlans() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["full-pricing", "enabled"],
+    queryFn: async () => {
+      if (!actor) return [];
+      try {
+        return await actor.getEnabledFullPricingPlans();
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useAddFullPricingPlan() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: import("../backend.d").FullPricingPlanInput) => {
+      if (!actor) throw new Error("Not connected");
+      return actor.addFullPricingPlan(input);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["full-pricing"] }),
+  });
+}
+
+export function useUpdateFullPricingPlan() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      input,
+    }: {
+      id: bigint;
+      input: import("../backend.d").FullPricingPlanInput;
+    }) => {
+      if (!actor) throw new Error("Not connected");
+      return actor.updateFullPricingPlan(id, input);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["full-pricing"] }),
+  });
+}
+
+export function useDeleteFullPricingPlan() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: bigint) => {
+      if (!actor) throw new Error("Not connected");
+      return actor.deleteFullPricingPlan(id);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["full-pricing"] }),
+  });
+}
+
+export function useToggleFullPricingPlanEnabled() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: bigint) => {
+      if (!actor) throw new Error("Not connected");
+      return actor.toggleFullPricingPlanEnabled(id);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["full-pricing"] }),
+  });
+}
+
+export function useFullPricingSeed() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      if (!actor) throw new Error("Not connected");
+      return actor.fullPricingSeed();
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["full-pricing"] }),
+  });
+}
+
+// ─── Season Offer Settings ─────────────────────────────────────────────────
+
+export function useGetSeasonOfferSettings() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["season-offer-settings"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await actor.getSeasonOfferSettings();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateSeasonOfferSettings() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      settings: import("../backend.d").SeasonOfferSettings,
+    ) => {
+      if (!actor) throw new Error("Not connected");
+      return actor.updateSeasonOfferSettings(settings);
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["season-offer-settings"] }),
+  });
+}

@@ -1,5 +1,17 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +21,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -29,6 +48,7 @@ import {
   Settings,
   Shield,
 } from "lucide-react";
+import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAdmin } from "../contexts/AdminContext";
@@ -72,6 +92,16 @@ import {
   useUpdateSiteStats,
   useUpdateSliderRates,
   useUpdateVideo,
+} from "../hooks/useQueries";
+import {
+  useAddFullPricingPlan,
+  useDeleteFullPricingPlan,
+  useFullPricingSeed,
+  useGetAllFullPricingPlans,
+  useGetSeasonOfferSettings,
+  useToggleFullPricingPlanEnabled,
+  useUpdateFullPricingPlan,
+  useUpdateSeasonOfferSettings,
 } from "../hooks/useQueries";
 
 // ─── Login Screen ─────────────────────────────────────────────────────
@@ -841,44 +871,106 @@ function ServicesTab() {
 
 // ─── Pricing Plans Tab ───────────────────────────────────────────────────────
 
-function PricingTab() {
-  const { data: plans = [], isLoading } = useGetAllPricingPlans();
-  const addPlan = useAddPricingPlan();
-  const updatePlan = useUpdatePricingPlan();
-  const togglePublish = useTogglePricingPublished();
+function FullPricingTab() {
+  const { data: plans = [], isLoading } = useGetAllFullPricingPlans();
+  const addPlan = useAddFullPricingPlan();
+  const updatePlan = useUpdateFullPricingPlan();
+  const deletePlan = useDeleteFullPricingPlan();
+  const toggleEnabled = useToggleFullPricingPlanEnabled();
+  const seedPlans = useFullPricingSeed();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<(typeof plans)[0] | null>(null);
-  const [form, setForm] = useState({ planLabel: "", price: "", note: "" });
+  const [deleteConfirmId, setDeleteConfirmId] = useState<bigint | null>(null);
+
+  type BadgeType = "None" | "Most Popular" | "Most People Trust" | "Custom";
+  const [form, setForm] = useState({
+    name: "",
+    price: "",
+    offerPrice: "",
+    deliveryDays: "",
+    videoCount: "",
+    planTypeBadge: "None" as BadgeType,
+    customBadge: "",
+    hasSeasonOffer: false,
+    offerDescription: "",
+    services: [""] as string[],
+    enabled: true,
+  });
+
+  const knownBadges: BadgeType[] = [
+    "None",
+    "Most Popular",
+    "Most People Trust",
+    "Custom",
+  ];
 
   const openAdd = () => {
     setEditItem(null);
-    setForm({ planLabel: "", price: "", note: "" });
+    setForm({
+      name: "",
+      price: "",
+      offerPrice: "",
+      deliveryDays: "",
+      videoCount: "",
+      planTypeBadge: "None",
+      customBadge: "",
+      hasSeasonOffer: false,
+      offerDescription: "",
+      services: [""],
+      enabled: true,
+    });
     setDialogOpen(true);
   };
+
   const openEdit = (p: (typeof plans)[0]) => {
     setEditItem(p);
-    setForm({ planLabel: p.planLabel, price: String(p.price), note: p.note });
+    const badge: BadgeType = (knownBadges as string[]).includes(p.planTypeBadge)
+      ? (p.planTypeBadge as BadgeType)
+      : p.planTypeBadge
+        ? "Custom"
+        : "None";
+    setForm({
+      name: p.name,
+      price: String(Number(p.price)),
+      offerPrice: String(Number(p.offerPrice)),
+      deliveryDays: String(Number(p.deliveryDays)),
+      videoCount: String(Number(p.videoCount)),
+      planTypeBadge: badge,
+      customBadge: badge === "Custom" ? p.planTypeBadge : "",
+      hasSeasonOffer: p.hasSeasonOffer,
+      offerDescription: p.offerDescription,
+      services: p.services.length > 0 ? [...p.services] : [""],
+      enabled: p.enabled,
+    });
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
     try {
+      const resolvedBadge =
+        form.planTypeBadge === "None"
+          ? ""
+          : form.planTypeBadge === "Custom"
+            ? form.customBadge
+            : form.planTypeBadge;
+      const input = {
+        name: form.name,
+        price: BigInt(form.price || 0),
+        offerPrice: BigInt(form.offerPrice || 0),
+        deliveryDays: BigInt(form.deliveryDays || 0),
+        videoCount: BigInt(form.videoCount || 0),
+        planTypeBadge: resolvedBadge,
+        hasSeasonOffer: form.hasSeasonOffer,
+        offerDescription: form.offerDescription,
+        services: form.services.filter((s) => s.trim() !== ""),
+        enabled: form.enabled,
+      };
       if (editItem) {
-        await updatePlan.mutateAsync({
-          id: editItem.id,
-          plan: {
-            planLabel: form.planLabel,
-            price: BigInt(form.price || 0),
-            note: form.note,
-          },
-        });
+        await updatePlan.mutateAsync({ id: editItem.id, input });
         toast.success("Plan updated");
       } else {
-        await addPlan.mutateAsync({
-          planLabel: form.planLabel,
-          price: BigInt(form.price || 0),
-          note: form.note,
-        });
+        await addPlan.mutateAsync(input);
         toast.success("Plan added");
       }
       setDialogOpen(false);
@@ -887,20 +979,64 @@ function PricingTab() {
     }
   };
 
+  const handleDelete = async (id: bigint) => {
+    try {
+      await deletePlan.mutateAsync(id);
+      toast.success("Plan deleted");
+      setDeleteConfirmId(null);
+    } catch {
+      toast.error("Failed to delete");
+    }
+  };
+
+  const addService = () =>
+    setForm((p) => ({ ...p, services: [...p.services, ""] }));
+  const removeService = (idx: number) =>
+    setForm((p) => ({
+      ...p,
+      services: p.services.filter((_, i) => i !== idx),
+    }));
+  const updateService = (idx: number, val: string) =>
+    setForm((p) => ({
+      ...p,
+      services: p.services.map((s, i) => (i === idx ? val : s)),
+    }));
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <h2 className="text-gold font-semibold uppercase tracking-widest text-sm">
           Pricing Plans
         </h2>
-        <Button
-          onClick={openAdd}
-          className="bg-gold text-primary-foreground hover:bg-gold-light text-xs uppercase tracking-widest rounded-sm"
-          data-ocid="admin.primary_button"
-        >
-          + Add Plan
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              seedPlans.mutate();
+              toast.success("Seeding plans...");
+            }}
+            disabled={seedPlans.isPending}
+            className="border-gold/40 text-gold hover:bg-gold/10 text-xs uppercase tracking-widest"
+            data-ocid="admin.secondary_button"
+          >
+            {seedPlans.isPending ? (
+              <Loader2 className="w-3 h-3 animate-spin mr-1" />
+            ) : (
+              <Database className="w-3 h-3 mr-1" />
+            )}
+            Seed Plans
+          </Button>
+          <Button
+            onClick={openAdd}
+            className="bg-gold text-primary-foreground hover:bg-gold-light text-xs uppercase tracking-widest rounded-sm"
+            data-ocid="admin.primary_button"
+          >
+            + Add Plan
+          </Button>
+        </div>
       </div>
+
       {isLoading ? (
         <div
           className="flex items-center justify-center py-12"
@@ -912,9 +1048,11 @@ function PricingTab() {
         <Table data-ocid="admin.table">
           <TableHeader>
             <TableRow>
-              <TableHead>Label</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Note</TableHead>
+              <TableHead>Plan Name</TableHead>
+              <TableHead>Original Price</TableHead>
+              <TableHead>Offer Price</TableHead>
+              <TableHead>Badge</TableHead>
+              <TableHead>Services</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -922,21 +1060,54 @@ function PricingTab() {
           <TableBody>
             {plans.map((p, i) => (
               <TableRow key={String(p.id)} data-ocid={`admin.item.${i + 1}`}>
-                <TableCell className="font-medium">{p.planLabel}</TableCell>
+                <TableCell className="font-medium">{p.name}</TableCell>
                 <TableCell>
                   ₹{Number(p.price).toLocaleString("en-IN")}
                 </TableCell>
-                <TableCell className="text-muted-foreground text-sm max-w-xs truncate">
-                  {p.note}
+                <TableCell>
+                  {Number(p.offerPrice) > 0 ? (
+                    `₹${Number(p.offerPrice).toLocaleString("en-IN")}`
+                  ) : (
+                    <span className="text-muted-foreground text-xs">None</span>
+                  )}
                 </TableCell>
                 <TableCell>
-                  <PublishBadge published={p.published} />
+                  {p.planTypeBadge ? (
+                    <Badge className="bg-gold/20 text-gold border-gold/40 text-xs">
+                      {p.planTypeBadge}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <span className="text-muted-foreground text-xs">
+                    {p.services.length} item{p.services.length !== 1 ? "s" : ""}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <Badge
+                      className={
+                        p.enabled
+                          ? "bg-green-900/40 text-green-400 border-green-800 text-xs"
+                          : "bg-red-900/40 text-red-400 border-red-800 text-xs"
+                      }
+                    >
+                      {p.enabled ? "Enabled" : "Disabled"}
+                    </Badge>
+                    {p.hasSeasonOffer && (
+                      <Badge className="bg-red-900/40 text-red-400 border-red-800 text-xs">
+                        🎉 Season
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Switch
-                      checked={p.published}
-                      onCheckedChange={() => togglePublish.mutate(p.id)}
+                      checked={p.enabled}
+                      onCheckedChange={() => toggleEnabled.mutate(p.id)}
                       data-ocid={`admin.toggle.${i + 1}`}
                     />
                     <Button
@@ -948,6 +1119,51 @@ function PricingTab() {
                     >
                       Edit
                     </Button>
+                    <AlertDialog
+                      open={deleteConfirmId === p.id}
+                      onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+                    >
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDeleteConfirmId(p.id)}
+                          className="text-xs border-red-800 text-red-400 hover:bg-red-900/20"
+                          data-ocid={`admin.delete_button.${i + 1}`}
+                        >
+                          Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent
+                        className="bg-card border-border"
+                        data-ocid="admin.dialog"
+                      >
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="text-gold">
+                            Delete Plan?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete{" "}
+                            <strong>{p.name}</strong>? This cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel
+                            className="border-border"
+                            data-ocid="admin.cancel_button"
+                          >
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(p.id)}
+                            className="bg-red-700 hover:bg-red-600 text-white"
+                            data-ocid="admin.confirm_button"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </TableCell>
               </TableRow>
@@ -955,20 +1171,23 @@ function PricingTab() {
             {plans.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={7}
                   className="text-center text-muted-foreground py-8"
                   data-ocid="admin.empty_state"
                 >
-                  No plans yet.
+                  No plans yet. Click "Seed Plans" to add defaults or "+ Add
+                  Plan".
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       )}
+
+      {/* Add / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent
-          className="bg-card border-border"
+          className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto"
           data-ocid="admin.dialog"
         >
           <DialogHeader>
@@ -977,47 +1196,227 @@ function PricingTab() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {/* Plan Name */}
             <div>
               <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
-                Plan Label
+                Plan Name
               </Label>
               <Input
-                value={form.planLabel}
+                value={form.name}
                 onChange={(e) =>
-                  setForm((p) => ({ ...p, planLabel: e.target.value }))
+                  setForm((p) => ({ ...p, name: e.target.value }))
                 }
+                placeholder="e.g., Basic, Standard, Premium"
                 className="bg-background border-border"
                 data-ocid="admin.input"
               />
             </div>
+
+            {/* Prices row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
+                  Original Price ₹
+                </Label>
+                <Input
+                  type="number"
+                  value={form.price}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, price: e.target.value }))
+                  }
+                  placeholder="e.g., 7999"
+                  className="bg-background border-border"
+                  data-ocid="admin.input"
+                />
+              </div>
+              <div>
+                <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
+                  Offer Price ₹ (0 = no offer)
+                </Label>
+                <Input
+                  type="number"
+                  value={form.offerPrice}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, offerPrice: e.target.value }))
+                  }
+                  placeholder="e.g., 6999"
+                  className="bg-background border-border"
+                  data-ocid="admin.input"
+                />
+              </div>
+            </div>
+
+            {/* Delivery + Video Count */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
+                  Delivery Days
+                </Label>
+                <Input
+                  type="number"
+                  value={form.deliveryDays}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, deliveryDays: e.target.value }))
+                  }
+                  placeholder="e.g., 3"
+                  className="bg-background border-border"
+                  data-ocid="admin.input"
+                />
+              </div>
+              <div>
+                <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
+                  Video Count
+                </Label>
+                <Input
+                  type="number"
+                  value={form.videoCount}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, videoCount: e.target.value }))
+                  }
+                  placeholder="e.g., 10"
+                  className="bg-background border-border"
+                  data-ocid="admin.input"
+                />
+              </div>
+            </div>
+
+            {/* Plan Type Badge */}
             <div>
               <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
-                Price (₹)
+                Plan Type Badge
+              </Label>
+              <Select
+                value={form.planTypeBadge}
+                onValueChange={(v) =>
+                  setForm((p) => ({
+                    ...p,
+                    planTypeBadge: v as typeof p.planTypeBadge,
+                  }))
+                }
+              >
+                <SelectTrigger
+                  className="bg-background border-border"
+                  data-ocid="admin.select"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="None">None</SelectItem>
+                  <SelectItem value="Most Popular">Most Popular</SelectItem>
+                  <SelectItem value="Most People Trust">
+                    Most People Trust
+                  </SelectItem>
+                  <SelectItem value="Custom">Custom…</SelectItem>
+                </SelectContent>
+              </Select>
+              {form.planTypeBadge === "Custom" && (
+                <Input
+                  value={form.customBadge}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, customBadge: e.target.value }))
+                  }
+                  placeholder="Enter custom badge text"
+                  className="bg-background border-border mt-2"
+                  data-ocid="admin.input"
+                />
+              )}
+            </div>
+
+            {/* Season Offer */}
+            <div className="flex items-center gap-3 p-3 bg-background rounded border border-border">
+              <Checkbox
+                id="season-offer-toggle"
+                checked={form.hasSeasonOffer}
+                onCheckedChange={(checked) =>
+                  setForm((p) => ({ ...p, hasSeasonOffer: !!checked }))
+                }
+                data-ocid="admin.checkbox"
+              />
+              <Label
+                htmlFor="season-offer-toggle"
+                className="text-sm cursor-pointer"
+              >
+                Participates in Season Offer
+              </Label>
+            </div>
+
+            {/* Offer Description */}
+            <div>
+              <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
+                Offer Description{" "}
+                <span className="text-green-400 normal-case">
+                  (shown in green, e.g. "Save ₹1,000 — Limited Time!")
+                </span>
               </Label>
               <Input
-                type="number"
-                value={form.price}
+                value={form.offerDescription}
                 onChange={(e) =>
-                  setForm((p) => ({ ...p, price: e.target.value }))
+                  setForm((p) => ({ ...p, offerDescription: e.target.value }))
                 }
+                placeholder="Save ₹1,000 — Limited Time!"
                 className="bg-background border-border"
                 data-ocid="admin.input"
               />
+              {form.offerDescription && (
+                <p className="text-green-400 text-xs mt-1 font-semibold">
+                  Preview: {form.offerDescription}
+                </p>
+              )}
             </div>
+
+            {/* Services List */}
             <div>
-              <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
-                Note
+              <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-2 block">
+                Services / Features
               </Label>
-              <Textarea
-                value={form.note}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, note: e.target.value }))
-                }
-                className="bg-background border-border"
-                data-ocid="admin.textarea"
+              <div className="space-y-2">
+                {form.services.map((svc, idx) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: services are user-ordered editable strings
+                  <div key={`svc-${idx}`} className="flex items-center gap-2">
+                    <Input
+                      value={svc}
+                      onChange={(e) => updateService(idx, e.target.value)}
+                      placeholder={`Service ${idx + 1}`}
+                      className="bg-background border-border flex-1"
+                      data-ocid="admin.input"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeService(idx)}
+                      className="text-red-400 hover:text-red-300 hover:bg-red-900/20 px-2"
+                      type="button"
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addService}
+                  type="button"
+                  className="border-gold/40 text-gold hover:bg-gold/10 text-xs mt-1"
+                  data-ocid="admin.secondary_button"
+                >
+                  + Add Service
+                </Button>
+              </div>
+            </div>
+
+            {/* Enabled */}
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={form.enabled}
+                onCheckedChange={(v) => setForm((p) => ({ ...p, enabled: v }))}
+                data-ocid="admin.switch"
               />
+              <Label className="text-sm">
+                Enabled (visible on public site)
+              </Label>
             </div>
           </div>
+
           <DialogFooter>
             <Button
               variant="outline"
@@ -1036,12 +1435,376 @@ function PricingTab() {
               {addPlan.isPending || updatePlan.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                "Save"
+                "Save Plan"
               )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// ─── Season Offer Tab ─────────────────────────────────────────────────────────
+
+function useCountdownAdmin(endDateStr: string) {
+  const target = endDateStr ? new Date(`${endDateStr}T23:59:59`) : null;
+  const [timeLeft, setTimeLeft] = useState(() =>
+    target ? Math.max(0, target.getTime() - Date.now()) : 0,
+  );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: target is derived from endDateStr, both are in scope
+  useEffect(() => {
+    if (!target) return;
+    const id = setInterval(() => {
+      const remaining = Math.max(0, target.getTime() - Date.now());
+      setTimeLeft(remaining);
+      if (remaining <= 0) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [endDateStr]);
+  const totalSeconds = Math.floor(timeLeft / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return { days, hours, minutes, seconds, done: timeLeft <= 0 };
+}
+
+function SeasonOfferTab() {
+  const { data: settings, isLoading: settingsLoading } =
+    useGetSeasonOfferSettings();
+  const { data: allPlans = [] } = useGetAllFullPricingPlans();
+  const updateSettings = useUpdateSeasonOfferSettings();
+
+  const [form, setForm] = useState({
+    title: "Season Offer",
+    discountAmount: "1000",
+    badgeColor: "red",
+    startDate: "",
+    endDate: "2026-04-10",
+    postOfferWindowDays: "10",
+    offerMessage:
+      "🎉 Season Offer — Save ₹1,000 on Standard & Premium! Offer ends April 10th.",
+    postOfferMessage:
+      "You just missed our Season Offer that ended April 10th — but you're early enough to get a special deal that no other editor or freelancer can match. Contact us!",
+    applicablePlanIds: [] as string[],
+  });
+
+  useEffect(() => {
+    if (!settings) return;
+    setForm({
+      title: settings.title || "Season Offer",
+      discountAmount: String(Number(settings.discountAmount)),
+      badgeColor: settings.badgeColor || "red",
+      startDate: settings.startDate || "",
+      endDate: settings.endDate || "2026-04-10",
+      postOfferWindowDays: String(Number(settings.postOfferWindowDays)),
+      offerMessage: settings.offerMessage || "",
+      postOfferMessage: settings.postOfferMessage || "",
+      applicablePlanIds: settings.applicablePlanIds.map((id) => String(id)),
+    });
+  }, [settings]);
+
+  const countdown = useCountdownAdmin(form.endDate);
+
+  const togglePlanId = (id: string) => {
+    setForm((prev) => ({
+      ...prev,
+      applicablePlanIds: prev.applicablePlanIds.includes(id)
+        ? prev.applicablePlanIds.filter((x) => x !== id)
+        : [...prev.applicablePlanIds, id],
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      await updateSettings.mutateAsync({
+        title: form.title,
+        discountAmount: BigInt(form.discountAmount || 0),
+        badgeColor: form.badgeColor,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        postOfferWindowDays: BigInt(form.postOfferWindowDays || 10),
+        offerMessage: form.offerMessage,
+        postOfferMessage: form.postOfferMessage,
+        applicablePlanIds: form.applicablePlanIds.map((id) => BigInt(id)),
+      });
+      toast.success("Season offer settings saved!");
+    } catch {
+      toast.error("Failed to save season offer settings");
+    }
+  };
+
+  if (settingsLoading) {
+    return (
+      <div
+        className="flex items-center justify-center py-12"
+        data-ocid="admin.loading_state"
+      >
+        <Loader2 className="animate-spin text-gold" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <div className="flex justify-between items-center">
+        <h2 className="text-gold font-semibold uppercase tracking-widest text-sm">
+          Season Offer Settings
+        </h2>
+      </div>
+
+      <div className="bg-card border border-border rounded p-6 space-y-5">
+        {/* Offer Title */}
+        <div>
+          <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
+            Offer Title
+          </Label>
+          <Input
+            value={form.title}
+            onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
+            placeholder="Season Offer"
+            className="bg-background border-border"
+            data-ocid="admin.input"
+          />
+        </div>
+
+        {/* Discount Amount + Badge Color */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
+              Discount Amount ₹
+            </Label>
+            <Input
+              type="number"
+              value={form.discountAmount}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, discountAmount: e.target.value }))
+              }
+              placeholder="1000"
+              className="bg-background border-border"
+              data-ocid="admin.input"
+            />
+          </div>
+          <div>
+            <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
+              Badge Color
+            </Label>
+            <Select
+              value={form.badgeColor}
+              onValueChange={(v) => setForm((p) => ({ ...p, badgeColor: v }))}
+            >
+              <SelectTrigger
+                className="bg-background border-border"
+                data-ocid="admin.select"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="red">🔴 Red</SelectItem>
+                <SelectItem value="gold">🟡 Gold</SelectItem>
+                <SelectItem value="green">🟢 Green</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Dates */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
+              Start Date
+            </Label>
+            <Input
+              type="date"
+              value={form.startDate}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, startDate: e.target.value }))
+              }
+              className="bg-background border-border"
+              data-ocid="admin.input"
+            />
+          </div>
+          <div>
+            <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
+              End Date
+            </Label>
+            <Input
+              type="date"
+              value={form.endDate}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, endDate: e.target.value }))
+              }
+              className="bg-background border-border"
+              data-ocid="admin.input"
+            />
+          </div>
+        </div>
+
+        {/* Post-offer window */}
+        <div>
+          <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
+            Post-Offer Window (days after end date to show post-offer message)
+          </Label>
+          <Input
+            type="number"
+            value={form.postOfferWindowDays}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, postOfferWindowDays: e.target.value }))
+            }
+            placeholder="10"
+            className="bg-background border-border"
+            data-ocid="admin.input"
+          />
+        </div>
+
+        {/* Live Countdown Preview */}
+        {form.endDate && (
+          <div>
+            <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-2 block">
+              Live Countdown Preview (End Date: {form.endDate})
+            </Label>
+            <div className="border border-red-700 bg-black rounded-lg px-6 py-5">
+              <p className="text-center text-sm font-black uppercase text-red-500 tracking-wide mb-4">
+                {form.title || "SEASON OFFER"}
+              </p>
+              {!countdown.done ? (
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <span className="text-xs text-gray-400 uppercase tracking-widest whitespace-nowrap">
+                    OFFER ENDS IN
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {[
+                      { value: countdown.days, label: "DAYS" },
+                      { value: countdown.hours, label: "HRS" },
+                      { value: countdown.minutes, label: "MIN" },
+                      { value: countdown.seconds, label: "SEC" },
+                    ].map((unit, i) => (
+                      <div key={unit.label} className="flex items-center">
+                        <motion.div
+                          key={`${unit.label}-${unit.value}`}
+                          initial={{ scale: 1.12 }}
+                          animate={{ scale: 1 }}
+                          transition={{ duration: 0.18 }}
+                          className="bg-black border border-red-700 rounded px-3 py-1.5 min-w-[52px] text-center"
+                        >
+                          <span className="block text-2xl font-black text-red-500 tabular-nums leading-none">
+                            {String(unit.value).padStart(2, "0")}
+                          </span>
+                          <span className="block text-[9px] text-gray-400 uppercase tracking-widest mt-0.5">
+                            {unit.label}
+                          </span>
+                        </motion.div>
+                        {i < 3 && (
+                          <span className="text-red-500 text-xl font-black mx-1 leading-none">
+                            :
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-center text-red-400 text-sm">
+                  Offer has ended
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Offer Message */}
+        <div>
+          <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
+            Offer Message (shown during offer period)
+          </Label>
+          <Textarea
+            value={form.offerMessage}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, offerMessage: e.target.value }))
+            }
+            rows={3}
+            className="bg-background border-border text-sm"
+            data-ocid="admin.textarea"
+          />
+        </div>
+
+        {/* Post-Offer Message */}
+        <div>
+          <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
+            Post-Offer Message (shown after end date within window)
+          </Label>
+          <Textarea
+            value={form.postOfferMessage}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, postOfferMessage: e.target.value }))
+            }
+            rows={3}
+            className="bg-background border-border text-sm"
+            data-ocid="admin.textarea"
+          />
+        </div>
+
+        {/* Applicable Plans */}
+        {allPlans.length > 0 && (
+          <div>
+            <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-2 block">
+              Applicable Plans
+            </Label>
+            <div className="space-y-2">
+              {allPlans.map((plan) => (
+                <div key={String(plan.id)} className="flex items-center gap-3">
+                  <Checkbox
+                    id={`plan-${String(plan.id)}`}
+                    checked={form.applicablePlanIds.includes(String(plan.id))}
+                    onCheckedChange={() => togglePlanId(String(plan.id))}
+                    data-ocid="admin.checkbox"
+                  />
+                  <Label
+                    htmlFor={`plan-${String(plan.id)}`}
+                    className="text-sm cursor-pointer"
+                  >
+                    {plan.name}{" "}
+                    <span className="text-muted-foreground text-xs">
+                      (₹{Number(plan.price).toLocaleString("en-IN")})
+                    </span>
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Save */}
+        <Button
+          onClick={handleSave}
+          disabled={updateSettings.isPending}
+          className="bg-gold text-primary-foreground hover:bg-gold-light w-full"
+          data-ocid="admin.save_button"
+        >
+          {updateSettings.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          ) : null}
+          Save Season Offer Settings
+        </Button>
+
+        {updateSettings.isSuccess && (
+          <p
+            className="text-green-400 text-xs text-center"
+            data-ocid="admin.success_state"
+          >
+            ✓ Settings saved successfully
+          </p>
+        )}
+        {updateSettings.isError && (
+          <p
+            className="text-red-400 text-xs text-center"
+            data-ocid="admin.error_state"
+          >
+            ✗ Failed to save settings
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -2470,7 +3233,8 @@ export default function Admin() {
               { value: "videos", label: "Videos" },
               { value: "brands", label: "Brands" },
               { value: "services", label: "Services" },
-              { value: "pricing", label: "Pricing Plans" },
+              { value: "full-pricing", label: "Pricing Plans" },
+              { value: "season-offer", label: "Season Offer" },
               { value: "testimonials", label: "Testimonials" },
               { value: "faqs", label: "FAQs" },
               { value: "enquiries", label: "Enquiries" },
@@ -2514,8 +3278,11 @@ export default function Admin() {
           <TabsContent value="services">
             <ServicesTab />
           </TabsContent>
-          <TabsContent value="pricing">
-            <PricingTab />
+          <TabsContent value="full-pricing">
+            <FullPricingTab />
+          </TabsContent>
+          <TabsContent value="season-offer">
+            <SeasonOfferTab />
           </TabsContent>
           <TabsContent value="testimonials">
             <TestimonialsTab />

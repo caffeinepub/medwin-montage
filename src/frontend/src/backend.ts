@@ -89,11 +89,8 @@ export class ExternalBlob {
         return this;
     }
 }
-export interface FAQItem {
-    id: bigint;
-    question: string;
-    published: boolean;
-    answer: string;
+export interface UserProfile {
+    name: string;
 }
 export interface VideoInput {
     title: string;
@@ -101,7 +98,21 @@ export interface VideoInput {
     description: string;
     category: string;
 }
+export interface Testimonial {
+    id: bigint;
+    review: string;
+    clientName: string;
+    published: boolean;
+    company: string;
+    rating: bigint;
+}
 export type Time = bigint;
+export interface MonthlyPackage {
+    videoCount: bigint;
+    description: string;
+    enabled: boolean;
+    price: bigint;
+}
 export interface PortfolioVideo {
     id: bigint;
     title: string;
@@ -113,18 +124,18 @@ export interface PortfolioVideo {
 export interface _CaffeineStorageRefillInformation {
     proposed_top_up_amount?: bigint;
 }
-export interface ServiceFullInput {
+export interface FullPricingPlan {
     id: bigint;
-    title: string;
-    features: Array<string>;
-    description: string;
-}
-export interface Service {
-    id: bigint;
-    title: string;
-    features: Array<string>;
-    published: boolean;
-    description: string;
+    hasSeasonOffer: boolean;
+    videoCount: bigint;
+    name: string;
+    offerDescription: string;
+    deliveryDays: bigint;
+    enabled: boolean;
+    offerPrice: bigint;
+    price: bigint;
+    planTypeBadge: string;
+    services: Array<string>;
 }
 export interface _CaffeineStorageCreateCertificateResult {
     method: string;
@@ -137,17 +148,16 @@ export interface PricingPlan {
     note: string;
     price: bigint;
 }
+export interface PageSection {
+    id: string;
+    description: string;
+    heading: string;
+    imageUrl: string;
+    visible: boolean;
+}
 export interface FAQInput {
     question: string;
     answer: string;
-}
-export interface ContactEnquiry {
-    id: bigint;
-    name: string;
-    email: string;
-    message: string;
-    timestamp: Time;
-    phone: string;
 }
 export interface Brand {
     id: bigint;
@@ -158,13 +168,11 @@ export interface Brand {
     category: string;
     location: string;
 }
-export interface OfficeProfile {
-    city: string;
-    mapsUrl: string;
-    whatsapp: string;
-    email: string;
-    address: string;
-    phone: string;
+export interface SliderRates {
+    content: bigint;
+    editing: bigint;
+    other: bigint;
+    videography: bigint;
 }
 export interface ServiceInput {
     title: string;
@@ -179,6 +187,66 @@ export interface TestimonialFullInput {
     company: string;
     rating: bigint;
 }
+export interface PageContent {
+    heroSubtitle: string;
+    sections: Array<PageSection>;
+    heroTitle: string;
+    heroBackgroundImage: string;
+    pageId: string;
+}
+export interface FAQItem {
+    id: bigint;
+    question: string;
+    published: boolean;
+    answer: string;
+}
+export interface SiteStats {
+    videosDelivered: bigint;
+    happyClients: bigint;
+    viewsGenerated: bigint;
+}
+export interface ServiceFullInput {
+    id: bigint;
+    title: string;
+    features: Array<string>;
+    description: string;
+}
+export interface Service {
+    id: bigint;
+    title: string;
+    features: Array<string>;
+    published: boolean;
+    description: string;
+}
+export interface PresetPackage {
+    id: bigint;
+    features: Array<string>;
+    name: string;
+    deliveryDays: bigint;
+    enabled: boolean;
+    price: bigint;
+}
+export interface ContactEnquiry {
+    id: bigint;
+    name: string;
+    email: string;
+    message: string;
+    timestamp: Time;
+    phone: string;
+}
+export interface ReelPricing {
+    editingContentCamera: bigint;
+    editingCamera: bigint;
+    editingOnly: bigint;
+}
+export interface OfficeProfile {
+    city: string;
+    mapsUrl: string;
+    whatsapp: string;
+    email: string;
+    address: string;
+    phone: string;
+}
 export interface BrandInput {
     mapsUrl: string;
     name: string;
@@ -186,10 +254,37 @@ export interface BrandInput {
     category: string;
     location: string;
 }
+export interface FullPricingPlanInput {
+    hasSeasonOffer: boolean;
+    videoCount: bigint;
+    name: string;
+    offerDescription: string;
+    deliveryDays: bigint;
+    enabled: boolean;
+    offerPrice: bigint;
+    price: bigint;
+    planTypeBadge: string;
+    services: Array<string>;
+}
+export interface SeasonOfferSettings {
+    title: string;
+    endDate: string;
+    postOfferMessage: string;
+    discountAmount: bigint;
+    applicablePlanIds: Array<bigint>;
+    offerMessage: string;
+    postOfferWindowDays: bigint;
+    badgeColor: string;
+    startDate: string;
+}
 export interface PricingPlanInput {
     planLabel: string;
     note: string;
     price: bigint;
+}
+export interface _CaffeineStorageRefillResult {
+    success?: boolean;
+    topped_up_amount?: bigint;
 }
 export interface PortfolioVideoFullInput {
     id: bigint;
@@ -199,66 +294,10 @@ export interface PortfolioVideoFullInput {
     description: string;
     category: string;
 }
-export interface _CaffeineStorageRefillResult {
-    success?: boolean;
-    topped_up_amount?: bigint;
-}
-export interface Testimonial {
-    id: bigint;
-    review: string;
-    clientName: string;
-    published: boolean;
-    company: string;
-    rating: bigint;
-}
 export enum UserRole {
     admin = "admin",
     user = "user",
     guest = "guest"
-}
-export interface PageSection {
-    id: string;
-    heading: string;
-    description: string;
-    imageUrl: string;
-    visible: boolean;
-}
-export interface PageContent {
-    pageId: string;
-    heroTitle: string;
-    heroSubtitle: string;
-    heroBackgroundImage: string;
-    sections: Array<PageSection>;
-}
-export interface PresetPackage {
-    id: bigint;
-    name: string;
-    price: bigint;
-    features: Array<string>;
-    deliveryDays: bigint;
-    enabled: boolean;
-}
-export interface ReelPricing {
-    editingOnly: bigint;
-    editingCamera: bigint;
-    editingContentCamera: bigint;
-}
-export interface MonthlyPackage {
-    price: bigint;
-    videoCount: bigint;
-    description: string;
-    enabled: boolean;
-}
-export interface SliderRates {
-    editing: bigint;
-    videography: bigint;
-    content: bigint;
-    other: bigint;
-}
-export interface SiteStats {
-    videosDelivered: bigint;
-    happyClients: bigint;
-    viewsGenerated: bigint;
 }
 export interface backendInterface {
     _caffeineStorageBlobIsLive(hash: Uint8Array): Promise<boolean>;
@@ -270,6 +309,7 @@ export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     addBrandPartner(brand: BrandInput): Promise<bigint>;
     addFAQItem(faq: FAQInput): Promise<bigint>;
+    addFullPricingPlan(input: FullPricingPlanInput): Promise<bigint>;
     addPortfolioVideo(video: VideoInput): Promise<bigint>;
     addPricingPlan(plan: PricingPlanInput): Promise<bigint>;
     addService(service: ServiceInput): Promise<bigint>;
@@ -277,11 +317,14 @@ export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     deleteBrandPartner(brandId: bigint): Promise<void>;
     deleteFAQItem(faqId: bigint): Promise<void>;
+    deleteFullPricingPlan(planId: bigint): Promise<void>;
     deletePortfolioVideo(videoId: bigint): Promise<void>;
     deleteTestimonial(testimonialId: bigint): Promise<void>;
+    fullPricingSeed(): Promise<void>;
     getAllBrands(): Promise<Array<Brand>>;
     getAllContactEnquiries(): Promise<Array<ContactEnquiry>>;
     getAllFAQs(): Promise<Array<FAQItem>>;
+    getAllFullPricingPlans(): Promise<Array<FullPricingPlan>>;
     getAllPageContent(): Promise<Array<[string, PageContent]>>;
     getAllPresetPackages(): Promise<Array<PresetPackage>>;
     getAllPricingPlans(): Promise<Array<PricingPlan>>;
@@ -289,7 +332,9 @@ export interface backendInterface {
     getAllTestimonials(): Promise<Array<Testimonial>>;
     getAllVideos(): Promise<Array<PortfolioVideo>>;
     getBrandsByCategory(category: string): Promise<Array<Brand>>;
+    getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getEnabledFullPricingPlans(): Promise<Array<FullPricingPlan>>;
     getMonthlyPackage(): Promise<MonthlyPackage>;
     getOfficeProfile(): Promise<OfficeProfile>;
     getPageContent(pageId: string): Promise<PageContent | null>;
@@ -301,12 +346,14 @@ export interface backendInterface {
     getPublishedTestimonials(): Promise<Array<Testimonial>>;
     getPublishedVideos(): Promise<Array<PortfolioVideo>>;
     getReelPricing(): Promise<ReelPricing>;
+    getSeasonOfferSettings(): Promise<SeasonOfferSettings>;
     getServicesAndPricing(): Promise<{
         pricing: Array<PricingPlan>;
         services: Array<Service>;
     }>;
     getSiteStats(): Promise<SiteStats>;
     getSliderRates(): Promise<SliderRates>;
+    getUserProfile(user: Principal): Promise<UserProfile | null>;
     getVideoById(videoId: bigint): Promise<PortfolioVideo | null>;
     getVideosByCategory(category: string): Promise<Array<PortfolioVideo>>;
     isCallerAdmin(): Promise<boolean>;
@@ -314,16 +361,19 @@ export interface backendInterface {
         brands: Array<Brand>;
         videos: Array<PortfolioVideo>;
     }>;
+    saveCallerUserProfile(profile: UserProfile): Promise<void>;
     seedData(): Promise<void>;
     seedPageContent(): Promise<void>;
     submitContactEnquiry(name: string, email: string, phone: string, message: string, selectedPlan: string): Promise<bigint>;
     toggleBrandPublished(brandId: bigint): Promise<boolean>;
     toggleFAQPublished(faqId: bigint): Promise<boolean>;
+    toggleFullPricingPlanEnabled(planId: bigint): Promise<boolean>;
     togglePricingPublished(planId: bigint): Promise<boolean>;
     toggleServicePublished(serviceId: bigint): Promise<boolean>;
     toggleTestimonialPublished(testimonialId: bigint): Promise<boolean>;
     toggleVideoPublished(videoId: bigint): Promise<boolean>;
     updateBrandPartner(id: bigint, brand: BrandInput): Promise<void>;
+    updateFullPricingPlan(id: bigint, input: FullPricingPlanInput): Promise<void>;
     updateMonthlyPackage(pkg: MonthlyPackage): Promise<void>;
     updateOfficeProfile(profile: OfficeProfile): Promise<void>;
     updatePageContent(pageId: string, content: PageContent): Promise<void>;
@@ -331,11 +381,12 @@ export interface backendInterface {
     updatePresetPackage(pkg: PresetPackage): Promise<void>;
     updatePricingPlan(id: bigint, plan: PricingPlanInput): Promise<void>;
     updateReelPricing(pricing: ReelPricing): Promise<void>;
+    updateSeasonOfferSettings(settings: SeasonOfferSettings): Promise<void>;
     updateService(service: ServiceFullInput): Promise<void>;
     updateSiteStats(stats: SiteStats): Promise<void>;
     updateSliderRates(rates: SliderRates): Promise<void>;
 }
-import type { PortfolioVideo as _PortfolioVideo, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { PageContent as _PageContent, PortfolioVideo as _PortfolioVideo, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -464,6 +515,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async addFullPricingPlan(arg0: FullPricingPlanInput): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addFullPricingPlan(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addFullPricingPlan(arg0);
+            return result;
+        }
+    }
     async addPortfolioVideo(arg0: VideoInput): Promise<bigint> {
         if (this.processError) {
             try {
@@ -534,6 +599,104 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async deleteBrandPartner(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteBrandPartner(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteBrandPartner(arg0);
+            return result;
+        }
+    }
+    async deleteFAQItem(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteFAQItem(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteFAQItem(arg0);
+            return result;
+        }
+    }
+    async deleteFullPricingPlan(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteFullPricingPlan(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteFullPricingPlan(arg0);
+            return result;
+        }
+    }
+    async deletePortfolioVideo(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deletePortfolioVideo(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deletePortfolioVideo(arg0);
+            return result;
+        }
+    }
+    async deleteTestimonial(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteTestimonial(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteTestimonial(arg0);
+            return result;
+        }
+    }
+    async fullPricingSeed(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.fullPricingSeed();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.fullPricingSeed();
+            return result;
+        }
+    }
+    async getAllBrands(): Promise<Array<Brand>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllBrands();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllBrands();
+            return result;
+        }
+    }
     async getAllContactEnquiries(): Promise<Array<ContactEnquiry>> {
         if (this.processError) {
             try {
@@ -545,6 +708,104 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getAllContactEnquiries();
+            return result;
+        }
+    }
+    async getAllFAQs(): Promise<Array<FAQItem>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllFAQs();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllFAQs();
+            return result;
+        }
+    }
+    async getAllFullPricingPlans(): Promise<Array<FullPricingPlan>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllFullPricingPlans();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllFullPricingPlans();
+            return result;
+        }
+    }
+    async getAllPageContent(): Promise<Array<[string, PageContent]>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllPageContent();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllPageContent();
+            return result;
+        }
+    }
+    async getAllPresetPackages(): Promise<Array<PresetPackage>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllPresetPackages();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllPresetPackages();
+            return result;
+        }
+    }
+    async getAllPricingPlans(): Promise<Array<PricingPlan>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllPricingPlans();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllPricingPlans();
+            return result;
+        }
+    }
+    async getAllServices(): Promise<Array<Service>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllServices();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllServices();
+            return result;
+        }
+    }
+    async getAllTestimonials(): Promise<Array<Testimonial>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllTestimonials();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllTestimonials();
             return result;
         }
     }
@@ -576,18 +837,60 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getCallerUserProfile(): Promise<UserProfile | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCallerUserProfile();
+                return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCallerUserProfile();
+            return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n10(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n11(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n10(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n11(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getEnabledFullPricingPlans(): Promise<Array<FullPricingPlan>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getEnabledFullPricingPlans();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getEnabledFullPricingPlans();
+            return result;
+        }
+    }
+    async getMonthlyPackage(): Promise<MonthlyPackage> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMonthlyPackage();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMonthlyPackage();
+            return result;
         }
     }
     async getOfficeProfile(): Promise<OfficeProfile> {
@@ -601,6 +904,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getOfficeProfile();
+            return result;
+        }
+    }
+    async getPageContent(arg0: string): Promise<PageContent | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPageContent(arg0);
+                return from_candid_opt_n13(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPageContent(arg0);
+            return from_candid_opt_n13(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getPresetPackages(): Promise<Array<PresetPackage>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPresetPackages();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPresetPackages();
             return result;
         }
     }
@@ -688,6 +1019,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getReelPricing(): Promise<ReelPricing> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getReelPricing();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getReelPricing();
+            return result;
+        }
+    }
+    async getSeasonOfferSettings(): Promise<SeasonOfferSettings> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getSeasonOfferSettings();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getSeasonOfferSettings();
+            return result;
+        }
+    }
     async getServicesAndPricing(): Promise<{
         pricing: Array<PricingPlan>;
         services: Array<Service>;
@@ -705,18 +1064,60 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getSiteStats(): Promise<SiteStats> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getSiteStats();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getSiteStats();
+            return result;
+        }
+    }
+    async getSliderRates(): Promise<SliderRates> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getSliderRates();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getSliderRates();
+            return result;
+        }
+    }
+    async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getUserProfile(arg0);
+                return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getUserProfile(arg0);
+            return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getVideoById(arg0: bigint): Promise<PortfolioVideo | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getVideoById(arg0);
-                return from_candid_opt_n12(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n14(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getVideoById(arg0);
-            return from_candid_opt_n12(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n14(this._uploadFile, this._downloadFile, result);
         }
     }
     async getVideosByCategory(arg0: string): Promise<Array<PortfolioVideo>> {
@@ -764,6 +1165,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.saveCallerUserProfile(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.saveCallerUserProfile(arg0);
+            return result;
+        }
+    }
     async seedData(): Promise<void> {
         if (this.processError) {
             try {
@@ -778,18 +1193,31 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async submitContactEnquiry(arg0: string, arg1: string, arg2: string, arg3: string, arg4: string): Promise<bigint> {
-        const encodedMessage = arg4 ? arg4 + "|||" + arg3 : arg3;
+    async seedPageContent(): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.submitContactEnquiry(arg0, arg1, arg2, encodedMessage);
+                const result = await this.actor.seedPageContent();
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.submitContactEnquiry(arg0, arg1, arg2, encodedMessage);
+            const result = await this.actor.seedPageContent();
+            return result;
+        }
+    }
+    async submitContactEnquiry(arg0: string, arg1: string, arg2: string, arg3: string, arg4: string): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitContactEnquiry(arg0, arg1, arg2, arg3, arg4);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.submitContactEnquiry(arg0, arg1, arg2, arg3, arg4);
             return result;
         }
     }
@@ -818,6 +1246,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.toggleFAQPublished(arg0);
+            return result;
+        }
+    }
+    async toggleFullPricingPlanEnabled(arg0: bigint): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.toggleFullPricingPlanEnabled(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.toggleFullPricingPlanEnabled(arg0);
             return result;
         }
     }
@@ -891,312 +1333,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async updateOfficeProfile(arg0: OfficeProfile): Promise<void> {
+    async updateFullPricingPlan(arg0: bigint, arg1: FullPricingPlanInput): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateOfficeProfile(arg0);
+                const result = await this.actor.updateFullPricingPlan(arg0, arg1);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateOfficeProfile(arg0);
-            return result;
-        }
-    }
-    async updatePortfolioVideo(arg0: PortfolioVideoFullInput): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.updatePortfolioVideo(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.updatePortfolioVideo(arg0);
-            return result;
-        }
-    }
-    async updatePricingPlan(arg0: bigint, arg1: PricingPlanInput): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.updatePricingPlan(arg0, arg1);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.updatePricingPlan(arg0, arg1);
-            return result;
-        }
-    }
-    async updateService(arg0: ServiceFullInput): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.updateService(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.updateService(arg0);
-            return result;
-        }
-    }
-    async deleteBrandPartner(arg0: bigint): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.deleteBrandPartner(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.deleteBrandPartner(arg0);
-            return result;
-        }
-    }
-    async deleteFAQItem(arg0: bigint): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.deleteFAQItem(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.deleteFAQItem(arg0);
-            return result;
-        }
-    }
-    async deletePortfolioVideo(arg0: bigint): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.deletePortfolioVideo(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.deletePortfolioVideo(arg0);
-            return result;
-        }
-    }
-    async deleteTestimonial(arg0: bigint): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.deleteTestimonial(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.deleteTestimonial(arg0);
-            return result;
-        }
-    }
-
-    async getAllBrands(): Promise<Array<Brand>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getAllBrands();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getAllBrands();
-            return result;
-        }
-    }
-    async getAllFAQs(): Promise<Array<FAQItem>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getAllFAQs();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getAllFAQs();
-            return result;
-        }
-    }
-    async getAllPageContent(): Promise<Array<[string, PageContent]>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getAllPageContent();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getAllPageContent();
-            return result;
-        }
-    }
-    async getAllPresetPackages(): Promise<Array<PresetPackage>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getAllPresetPackages();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getAllPresetPackages();
-            return result;
-        }
-    }
-    async getAllPricingPlans(): Promise<Array<PricingPlan>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getAllPricingPlans();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getAllPricingPlans();
-            return result;
-        }
-    }
-    async getAllServices(): Promise<Array<Service>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getAllServices();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getAllServices();
-            return result;
-        }
-    }
-    async getAllTestimonials(): Promise<Array<Testimonial>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getAllTestimonials();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getAllTestimonials();
-            return result;
-        }
-    }
-    async getMonthlyPackage(): Promise<MonthlyPackage> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getMonthlyPackage();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getMonthlyPackage();
-            return result;
-        }
-    }
-    async getPageContent(arg0: string): Promise<PageContent | null> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getPageContent(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getPageContent(arg0);
-            return result;
-        }
-    }
-    async getPresetPackages(): Promise<Array<PresetPackage>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getPresetPackages();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getPresetPackages();
-            return result;
-        }
-    }
-    async getReelPricing(): Promise<ReelPricing> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getReelPricing();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getReelPricing();
-            return result;
-        }
-    }
-    async getSiteStats(): Promise<SiteStats> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getSiteStats();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getSiteStats();
-            return result;
-        }
-    }
-    async getSliderRates(): Promise<SliderRates> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getSliderRates();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getSliderRates();
-            return result;
-        }
-    }
-    async seedPageContent(): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.seedPageContent();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.seedPageContent();
+            const result = await this.actor.updateFullPricingPlan(arg0, arg1);
             return result;
         }
     }
@@ -1214,6 +1361,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async updateOfficeProfile(arg0: OfficeProfile): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateOfficeProfile(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateOfficeProfile(arg0);
+            return result;
+        }
+    }
     async updatePageContent(arg0: string, arg1: PageContent): Promise<void> {
         if (this.processError) {
             try {
@@ -1225,6 +1386,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.updatePageContent(arg0, arg1);
+            return result;
+        }
+    }
+    async updatePortfolioVideo(arg0: PortfolioVideoFullInput): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updatePortfolioVideo(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updatePortfolioVideo(arg0);
             return result;
         }
     }
@@ -1242,6 +1417,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async updatePricingPlan(arg0: bigint, arg1: PricingPlanInput): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updatePricingPlan(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updatePricingPlan(arg0, arg1);
+            return result;
+        }
+    }
     async updateReelPricing(arg0: ReelPricing): Promise<void> {
         if (this.processError) {
             try {
@@ -1253,6 +1442,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.updateReelPricing(arg0);
+            return result;
+        }
+    }
+    async updateSeasonOfferSettings(arg0: SeasonOfferSettings): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateSeasonOfferSettings(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateSeasonOfferSettings(arg0);
+            return result;
+        }
+    }
+    async updateService(arg0: ServiceFullInput): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateService(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateService(arg0);
             return result;
         }
     }
@@ -1285,13 +1502,19 @@ export class Backend implements backendInterface {
         }
     }
 }
-function from_candid_UserRole_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n11(_uploadFile, _downloadFile, value);
+function from_candid_UserRole_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n12(_uploadFile, _downloadFile, value);
 }
 function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
     return from_candid_record_n5(_uploadFile, _downloadFile, value);
 }
-function from_candid_opt_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_PortfolioVideo]): PortfolioVideo | null {
+function from_candid_opt_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_PageContent]): PageContent | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_PortfolioVideo]): PortfolioVideo | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
@@ -1312,7 +1535,7 @@ function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint
         topped_up_amount: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.topped_up_amount))
     };
 }
-function from_candid_variant_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;

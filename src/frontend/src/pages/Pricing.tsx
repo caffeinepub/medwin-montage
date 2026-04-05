@@ -1,14 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { CheckCircle, MessageCircle } from "lucide-react";
+import { CheckCircle, MessageCircle, Tag } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
 import {
+  useGetEnabledFullPricingPlans,
   useGetMonthlyPackage,
-  useGetPresetPackages,
   useGetReelPricing,
+  useGetSeasonOfferSettings,
   useGetSliderRates,
 } from "../hooks/useQueries";
 
@@ -17,6 +18,10 @@ const FALLBACK_PRESETS = [
     id: 1n,
     name: "Basic",
     price: 3099n,
+    offerPrice: 0n,
+    hasSeasonOffer: false,
+    offerDescription: "",
+    planTypeBadge: "",
     features: [
       "7 Video Edits (Reels/Shorts/Videos)",
       "Basic Cuts & Transitions",
@@ -25,12 +30,18 @@ const FALLBACK_PRESETS = [
       "Posting Guidance",
     ],
     deliveryDays: 3n,
+    videoCount: 7n,
     enabled: true,
+    services: [] as string[],
   },
   {
     id: 2n,
     name: "Standard",
     price: 7999n,
+    offerPrice: 6999n,
+    hasSeasonOffer: true,
+    offerDescription: "Save \u20b91,000 \u2014 Limited Time!",
+    planTypeBadge: "Most Popular",
     features: [
       "10 Video Edits (Reels/Shorts/Videos)",
       "Advanced Color Grading",
@@ -41,12 +52,18 @@ const FALLBACK_PRESETS = [
       "Growth Strategy",
     ],
     deliveryDays: 1n,
+    videoCount: 10n,
     enabled: true,
+    services: [] as string[],
   },
   {
     id: 3n,
     name: "Premium",
     price: 9999n,
+    offerPrice: 8999n,
+    hasSeasonOffer: true,
+    offerDescription: "Save \u20b91,000 \u2014 Limited Time!",
+    planTypeBadge: "",
     features: [
       "15 Video Edits (Reels/Shorts/Videos)",
       "Shoot Session Included",
@@ -59,15 +76,19 @@ const FALLBACK_PRESETS = [
       "Priority Delivery",
     ],
     deliveryDays: 1n,
+    videoCount: 15n,
     enabled: true,
+    services: [] as string[],
   },
 ];
 
 function getDeliveryLabel(pkg: { name: string; deliveryDays: bigint }): string {
-  if (pkg.name === "Basic") return "Delivery in 2–3 days";
-  if (pkg.name === "Standard") return "Delivery in 1–1½ days";
-  if (pkg.name === "Premium") return "Delivery in ½ day — High Priority ⚡";
-  return `Delivery in ${Number(pkg.deliveryDays)} days`;
+  if (pkg.name === "Basic") return "Delivery in 2\u20133 days";
+  if (pkg.name === "Standard") return "Delivery in 1\u20131\u00bd days";
+  if (pkg.name === "Premium")
+    return "Delivery in \u00bd day \u2014 High Priority \u26a1";
+  const d = Number(pkg.deliveryDays);
+  return d === 1 ? "Delivery in 1 day" : `Delivery in ${d} days`;
 }
 
 const FALLBACK_REEL = {
@@ -88,22 +109,18 @@ const FALLBACK_SLIDER = {
   other: 500n,
 };
 
-// Season offers: planName -> { originalPrice, discountedPrice }
-const SEASON_OFFERS: Record<string, { original: number; discounted: number }> =
-  {
-    Standard: { original: 7999, discounted: 6999 },
-    Premium: { original: 9999, discounted: 8999 },
-  };
+const FALLBACK_OFFER_END = new Date("2026-04-10T23:59:59");
+const FALLBACK_POST_OFFER_WINDOW_DAYS = 10;
 
-const OFFER_END = new Date("2026-04-10T23:59:59");
-const POST_OFFER_WINDOW_END = new Date("2026-04-20T23:59:59");
+const BULK_DISCOUNT_THRESHOLD = 10000;
+const BULK_DISCOUNT_RATE = 0.15;
 
 function WhatsAppLink(msg: string) {
   return `https://wa.me/919487897160?text=${encodeURIComponent(msg)}`;
 }
 
 function fmt(n: bigint | number) {
-  return `₹${Number(n).toLocaleString("en-IN")}`;
+  return `\u20b9${Number(n).toLocaleString("en-IN")}`;
 }
 
 function useCountdown(target: Date) {
@@ -130,24 +147,55 @@ function useCountdown(target: Date) {
 }
 
 export default function Pricing() {
-  const { data: presetPackages } = useGetPresetPackages();
+  const { data: fullPlansRaw } = useGetEnabledFullPricingPlans();
+  const { data: seasonSettings } = useGetSeasonOfferSettings();
   const { data: reelPricing } = useGetReelPricing();
   const { data: monthlyPkg } = useGetMonthlyPackage();
   const { data: sliderRates } = useGetSliderRates();
 
-  const presets =
-    presetPackages && presetPackages.length > 0
-      ? presetPackages
-      : FALLBACK_PRESETS;
+  // Build presets from FullPricingPlan (map services to features)
+  const presets = useMemo(() => {
+    if (fullPlansRaw && fullPlansRaw.length > 0) {
+      return fullPlansRaw.map((p) => ({
+        ...p,
+        features: p.services.length > 0 ? p.services : [],
+      }));
+    }
+    return FALLBACK_PRESETS;
+  }, [fullPlansRaw]);
+
+  // Compute offer dates from settings
+  const offerEnd = useMemo(() => {
+    if (seasonSettings?.endDate) {
+      return new Date(`${seasonSettings.endDate}T23:59:59`);
+    }
+    return FALLBACK_OFFER_END;
+  }, [seasonSettings?.endDate]);
+
+  const postOfferWindowEnd = useMemo(() => {
+    const windowDays = seasonSettings?.postOfferWindowDays
+      ? Number(seasonSettings.postOfferWindowDays)
+      : FALLBACK_POST_OFFER_WINDOW_DAYS;
+    return new Date(offerEnd.getTime() + windowDays * 86400000);
+  }, [offerEnd, seasonSettings?.postOfferWindowDays]);
+
   const reel = reelPricing ?? FALLBACK_REEL;
   const monthly = monthlyPkg ?? FALLBACK_MONTHLY;
   const rates = sliderRates ?? FALLBACK_SLIDER;
 
   const now = new Date();
-  const isOfferActive = now < OFFER_END;
-  const isPostOfferWindow = now >= OFFER_END && now < POST_OFFER_WINDOW_END;
+  const isOfferActive = now < offerEnd;
+  const isPostOfferWindow = now >= offerEnd && now < postOfferWindowEnd;
 
-  const countdown = useCountdown(OFFER_END);
+  const countdown = useCountdown(offerEnd);
+
+  const offerBannerText =
+    seasonSettings?.offerMessage ||
+    "\ud83c\udf89 SEASON OFFER \u2014 SAVE \u20b91,000 ON STANDARD & PREMIUM!";
+
+  const postOfferText =
+    seasonSettings?.postOfferMessage ||
+    "You just missed our Season Offer \u2014 but you\u2019re early enough to get a special deal that no other editor or freelancer can match.";
 
   // Slider state
   const [editingQty, setEditingQty] = useState(5);
@@ -161,7 +209,15 @@ export default function Pricing() {
     contentQty * Number(rates.content) +
     otherQty * Number(rates.other);
 
-  const calcMsg = `Hi Medwin Montage! I'd like to book a custom package:\n- Editing: ${editingQty} videos\n- Videography: ${videoQty} shoots\n- Content: ${contentQty} items\n- Other: ${otherQty}\nEstimated Total: ₹${calcTotal.toLocaleString("en-IN")}`;
+  const bulkDiscountActive = calcTotal >= BULK_DISCOUNT_THRESHOLD;
+  const discountAmount = bulkDiscountActive
+    ? Math.round(calcTotal * BULK_DISCOUNT_RATE)
+    : 0;
+  const finalTotal = calcTotal - discountAmount;
+
+  const calcMsg = bulkDiscountActive
+    ? `Hi Medwin Montage! I'd like to book a custom package:\n- Editing: ${editingQty} videos\n- Videography: ${videoQty} shoots\n- Content: ${contentQty} items\n- Other: ${otherQty}\nSubtotal: \u20b9${calcTotal.toLocaleString("en-IN")}\n15% Bulk Discount Applied: -\u20b9${discountAmount.toLocaleString("en-IN")}\nFinal Total: \u20b9${finalTotal.toLocaleString("en-IN")}`
+    : `Hi Medwin Montage! I'd like to book a custom package:\n- Editing: ${editingQty} videos\n- Videography: ${videoQty} shoots\n- Content: ${contentQty} items\n- Other: ${otherQty}\nEstimated Total: \u20b9${calcTotal.toLocaleString("en-IN")}`;
 
   return (
     <div className="relative">
@@ -193,12 +249,22 @@ export default function Pricing() {
             >
               {/* Title */}
               <p className="text-center text-xl font-black uppercase text-red-500 tracking-wide">
-                🎉 SEASON OFFER — SAVE ₹1,000 ON PRO &amp; PREMIUM!
+                {offerBannerText}
               </p>
               {/* Subtitle */}
-              <p className="text-center text-sm text-muted-foreground mt-1">
-                Valid until April 10, 2026
-              </p>
+              {seasonSettings?.endDate && (
+                <p className="text-center text-sm text-muted-foreground mt-1">
+                  Valid until{" "}
+                  {new Date(seasonSettings.endDate).toLocaleDateString(
+                    "en-IN",
+                    {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    },
+                  )}
+                </p>
+              )}
 
               {/* Countdown row */}
               {!countdown.done && (
@@ -247,9 +313,7 @@ export default function Pricing() {
           {isPostOfferWindow && (
             <div className="mt-6 mb-2 mx-auto max-w-2xl p-5 bg-black border border-gold/60 rounded-sm text-center">
               <p className="text-foreground text-sm">
-                You just missed our Season Offer that ended April 10th — but
-                you&apos;re early enough to get a special deal that no other
-                editor or freelancer can match.{" "}
+                {postOfferText}{" "}
                 <Link
                   to="/contact"
                   className="text-gold underline font-semibold hover:text-gold-light"
@@ -264,9 +328,12 @@ export default function Pricing() {
             {presets
               .filter((p) => p.enabled)
               .map((pkg, i) => {
-                const isHighlight = i === 1;
-                const offer = SEASON_OFFERS[pkg.name];
-                const showOffer = isOfferActive && !!offer;
+                const showOffer =
+                  isOfferActive &&
+                  pkg.hasSeasonOffer &&
+                  Number(pkg.offerPrice) > 0;
+                const hasBadge = !!pkg.planTypeBadge;
+                const isHighlight = hasBadge || i === 1;
                 return (
                   <motion.div
                     key={String(pkg.id)}
@@ -281,22 +348,25 @@ export default function Pricing() {
                     }`}
                     data-ocid={`pricing.item.${i + 1}`}
                   >
-                    {/* Season offer badge — absolute top-left */}
+                    {/* Season offer badge \u2014 absolute top-left */}
                     {showOffer && (
                       <div className="absolute top-0 left-0 bg-red-600 text-white text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-tl-sm rounded-br-sm z-10">
-                        🎉 Season Offer
+                        \ud83c\udf89 Season Offer
                       </div>
                     )}
 
-                    {isHighlight && (
+                    {/* Plan type badge \u2014 top center */}
+                    {hasBadge && (
                       <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                        <span className="bg-gold text-primary-foreground text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full">
-                          Most Popular
+                        <span className="bg-gold text-primary-foreground text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full whitespace-nowrap">
+                          {pkg.planTypeBadge}
                         </span>
                       </div>
                     )}
                     <div
-                      className={`text-center mb-8 ${showOffer ? "pt-6" : ""}`}
+                      className={`text-center mb-8 ${
+                        showOffer || hasBadge ? "pt-6" : ""
+                      }`}
                     >
                       <h3
                         className={`font-display text-2xl font-bold uppercase tracking-widest mb-4 ${
@@ -309,15 +379,17 @@ export default function Pricing() {
                         <div>
                           <div className="flex items-center justify-center gap-3">
                             <span className="font-display text-2xl text-muted-foreground line-through">
-                              {fmt(BigInt(offer!.original))}
+                              {fmt(pkg.price)}
                             </span>
                             <span className="font-display text-4xl font-bold text-gold">
-                              {fmt(BigInt(offer!.discounted))}
+                              {fmt(pkg.offerPrice)}
                             </span>
                           </div>
-                          <p className="text-xs text-green-400 mt-1 font-semibold">
-                            Save ₹1,000 — Limited Time!
-                          </p>
+                          {pkg.offerDescription && (
+                            <p className="text-xs text-green-400 mt-1 font-semibold">
+                              {pkg.offerDescription}
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <div className="font-display text-4xl font-bold text-foreground">
@@ -366,7 +438,7 @@ export default function Pricing() {
           <SectionTitle
             accent="Per Video"
             title="Per Reel Pricing"
-            subtitle="Pay per video — no monthly commitment"
+            subtitle="Pay per video \u2014 no monthly commitment"
           />
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             {[
@@ -383,7 +455,7 @@ export default function Pricing() {
               {
                 label: "Editing + Content + Camera",
                 price: reel.editingContentCamera,
-                desc: "Script, shoot, edit — complete content creation",
+                desc: "Script, shoot, edit \u2014 complete content creation",
               },
             ].map((option, i) => (
               <motion.div
@@ -476,7 +548,7 @@ export default function Pricing() {
               <div className="mt-8 text-center">
                 <a
                   href={WhatsAppLink(
-                    `Hi Medwin Montage! I'm interested in the Monthly Package at ₹${Number(monthly.price).toLocaleString("en-IN")}/month.`,
+                    `Hi Medwin Montage! I'm interested in the Monthly Package at \u20b9${Number(monthly.price).toLocaleString("en-IN")}/month.`,
                   )}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -571,14 +643,61 @@ export default function Pricing() {
               ))}
             </div>
 
-            <div className="mt-8 border-t border-border pt-6 flex items-center justify-between">
+            {/* Bulk discount banner */}
+            {bulkDiscountActive && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="mt-6 flex items-center gap-3 bg-green-950 border border-green-600 rounded-sm px-5 py-3"
+              >
+                <Tag className="w-4 h-4 text-green-400 flex-shrink-0" />
+                <p className="text-sm text-green-300 font-semibold">
+                  \ud83c\udf89 Bulk Deal Unlocked! 15% discount applied on
+                  orders above \u20b910,000
+                </p>
+              </motion.div>
+            )}
+
+            <div className="mt-8 border-t border-border pt-6 flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-widest">
                   Estimated Total
                 </p>
-                <p className="font-display text-3xl font-bold text-gold mt-1">
-                  {fmt(calcTotal)}
-                </p>
+                {bulkDiscountActive ? (
+                  <div className="mt-1">
+                    <span className="font-display text-xl text-muted-foreground line-through mr-2">
+                      {fmt(calcTotal)}
+                    </span>
+                    <motion.span
+                      key={finalTotal}
+                      initial={{ scale: 1.1 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.2 }}
+                      className="font-display text-3xl font-bold text-green-400"
+                    >
+                      {fmt(finalTotal)}
+                    </motion.span>
+                    <p className="text-xs text-green-400 font-semibold mt-1">
+                      You save {fmt(discountAmount)} (15% off)
+                    </p>
+                  </div>
+                ) : (
+                  <motion.p
+                    key={calcTotal}
+                    initial={{ scale: 1.05 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.2 }}
+                    className="font-display text-3xl font-bold text-gold mt-1"
+                  >
+                    {fmt(calcTotal)}
+                  </motion.p>
+                )}
+                {!bulkDiscountActive && calcTotal > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add more to reach \u20b910,000 and unlock 15% off
+                  </p>
+                )}
               </div>
               <a
                 href={WhatsAppLink(calcMsg)}
@@ -594,7 +713,7 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* Floating button — scroll to customised plan */}
+      {/* Floating button \u2014 scroll to customised plan */}
       <div className="fixed bottom-6 left-6 z-50">
         <button
           type="button"
@@ -606,7 +725,7 @@ export default function Pricing() {
           className="bg-gold text-black text-xs font-bold uppercase tracking-widest px-5 py-3 rounded-full shadow-lg hover:opacity-90 transition-all flex items-center gap-2"
           data-ocid="pricing.secondary_button"
         >
-          <span>✦</span> Make Your Customised Plan
+          <span>\u2726</span> Make Your Customised Plan
         </button>
       </div>
     </div>
