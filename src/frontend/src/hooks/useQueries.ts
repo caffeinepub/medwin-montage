@@ -528,7 +528,7 @@ export function useGetAllPageContent() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        return await actor.getAllPageContent();
+        return await (actor as any).getAllPageContent();
       } catch {
         return [];
       }
@@ -956,5 +956,280 @@ export function useUpdateSeasonOfferSettings() {
     },
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["season-offer-settings"] }),
+  });
+}
+
+// ─── Per-Page Content Hooks ────────────────────────────────────────────────
+
+import type {
+  AboutPageContent,
+  ContactPageContent,
+  ContentWritingPageContent,
+  DigitalMarketingPageContent,
+  HomePageContent,
+  PortfolioPageContent,
+  PricingPageContent,
+  ServicesPageContent,
+  TestimonialsPageContent,
+} from "../backend.d";
+
+export function useGetHomePageContent() {
+  const { actor, isFetching } = useActor();
+  return useQuery<HomePageContent | null>({
+    queryKey: ["page-content", "home"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await (actor as any).getHomePageContent();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateHomePageContent() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (content: HomePageContent) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updateHomePageContent(content);
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["page-content", "home"] }),
+  });
+}
+
+export function useGetAboutPageContent() {
+  const { actor, isFetching } = useActor();
+  return useQuery<AboutPageContent | null>({
+    queryKey: ["page-content", "about"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await (actor as any).getAboutPageContent();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateAboutPageContent() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (content: AboutPageContent) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updateAboutPageContent(content);
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["page-content", "about"] }),
+  });
+}
+
+export function useGetServicesPageContent() {
+  const { actor, isFetching } = useActor();
+  return useQuery<ServicesPageContent | null>({
+    queryKey: ["page-content", "services"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await (actor as any).getServicesPageContent();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateServicesPageContent() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (content: ServicesPageContent) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updateServicesPageContent(content);
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["page-content", "services"] }),
+  });
+}
+
+export function useGetDigitalMarketingPageContent() {
+  const { actor, isFetching } = useActor();
+  return useQuery<DigitalMarketingPageContent | null>({
+    queryKey: ["page-content", "digital-marketing"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await (actor as any).getDigitalMarketingPageContent();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateDigitalMarketingPageContent() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (content: DigitalMarketingPageContent) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updateDigitalMarketingPageContent(content);
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["page-content", "digital-marketing"] }),
+  });
+}
+
+export function useGetContentWritingPageContent() {
+  const { actor, isFetching } = useActor();
+  return useQuery<ContentWritingPageContent | null>({
+    queryKey: ["page-content", "content-writing"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await (actor as any).getContentWritingPageContent();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateContentWritingPageContent() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (content: ContentWritingPageContent) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updateContentWritingPageContent(content);
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["page-content", "content-writing"] }),
+  });
+}
+
+export function useGetTestimonialsPageContent() {
+  const { actor, isFetching } = useActor();
+  return useQuery<TestimonialsPageContent | null>({
+    queryKey: ["page-content", "testimonials"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await (actor as any).getTestimonialsPageContent();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateTestimonialsPageContent() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (content: TestimonialsPageContent) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updateTestimonialsPageContent(content);
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["page-content", "testimonials"] }),
+  });
+}
+
+export function useGetContactPageContent() {
+  const { actor, isFetching } = useActor();
+  return useQuery<ContactPageContent | null>({
+    queryKey: ["page-content", "contact"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await (actor as any).getContactPageContent();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateContactPageContent() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (content: ContactPageContent) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updateContactPageContent(content);
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["page-content", "contact"] }),
+  });
+}
+
+export function useGetPortfolioPageContent() {
+  const { actor, isFetching } = useActor();
+  return useQuery<PortfolioPageContent | null>({
+    queryKey: ["page-content", "portfolio"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await (actor as any).getPortfolioPageContent();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdatePortfolioPageContent() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (content: PortfolioPageContent) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updatePortfolioPageContent(content);
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["page-content", "portfolio"] }),
+  });
+}
+
+export function useGetPricingPageContent() {
+  const { actor, isFetching } = useActor();
+  return useQuery<PricingPageContent | null>({
+    queryKey: ["page-content", "pricing"],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        return await (actor as any).getPricingPageContent();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdatePricingPageContent() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (content: PricingPageContent) => {
+      if (!actor) throw new Error("Not connected");
+      return (actor as any).updatePricingPageContent(content);
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["page-content", "pricing"] }),
   });
 }

@@ -8,6 +8,7 @@ import SectionTitle from "../components/SectionTitle";
 import {
   useGetEnabledFullPricingPlans,
   useGetMonthlyPackage,
+  useGetPricingPageContent,
   useGetReelPricing,
   useGetSeasonOfferSettings,
   useGetSliderRates,
@@ -152,6 +153,7 @@ export default function Pricing() {
   const { data: reelPricing } = useGetReelPricing();
   const { data: monthlyPkg } = useGetMonthlyPackage();
   const { data: sliderRates } = useGetSliderRates();
+  const { data: pricingPageData } = useGetPricingPageContent();
 
   // Build presets from FullPricingPlan (map services to features)
   const presets = useMemo(() => {
@@ -224,9 +226,12 @@ export default function Pricing() {
       <PageBackground src="/assets/generated/bg-pricing.dim_1920x1080.jpg" />
 
       <PageHero
-        title="Pricing"
-        subtitle="Transparent pricing for every stage of your content journey"
-        accent="Investment"
+        title={pricingPageData?.heroTitle || "Pricing"}
+        subtitle={
+          pricingPageData?.heroSubtitle ||
+          "Transparent pricing for every stage of your content journey"
+        }
+        accent={pricingPageData?.heroAccent || "Investment"}
       />
 
       {/* PRESET PACKAGES */}
@@ -234,8 +239,11 @@ export default function Pricing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <SectionTitle
             accent="Plans"
-            title="Choose Your Plan"
-            subtitle="All-inclusive plans for consistent content creators"
+            title={pricingPageData?.choosePlanHeading || "Choose Your Plan"}
+            subtitle={
+              pricingPageData?.choosePlanSubtext ||
+              "All-inclusive plans for consistent content creators"
+            }
           />
 
           {/* ── OFFER INFO CARD ── */}

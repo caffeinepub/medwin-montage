@@ -12,78 +12,98 @@ import { useState } from "react";
 import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
+import { useGetServicesPageContent } from "../hooks/useQueries";
 
-const services = [
-  {
-    icon: Video,
-    title: "Video Editing",
-    desc: "Professional post-production with color grading, sound design, motion graphics, and seamless cuts. Available in any resolution up to 4K.",
-    features: [
-      "Color grading & correction",
-      "Sound design & mixing",
-      "Motion graphics & titles",
-      "Multi-camera editing",
-    ],
-  },
-  {
-    icon: Camera,
-    title: "Cinematic Shooting",
-    desc: "On-location or studio cinematography using professional camera, drone, and gimbal stabilizer for breathtaking visuals.",
-    features: [
-      "Professional camera kit",
-      "Drone aerial footage",
-      "Gimbal stabilized shots",
-      "Studio & location shoots",
-    ],
-  },
-  {
-    icon: Share2,
-    title: "Social Media Content",
-    desc: "Platform-optimized short-form content: Instagram Reels, YouTube Shorts, TikTok, and Facebook — engineered for engagement.",
-    features: [
-      "Instagram Reels",
-      "YouTube Shorts",
-      "TikTok content",
-      "Story templates",
-    ],
-  },
-  {
-    icon: TrendingUp,
-    title: "Digital Marketing",
-    desc: "Full-funnel digital marketing: paid ads, organic growth strategies, brand positioning, and performance analytics.",
-    features: [
-      "Meta & Google Ads",
-      "Brand strategy",
-      "Analytics & reporting",
-      "Campaign management",
-    ],
-  },
-  {
-    icon: PenLine,
-    title: "Script & Content Writing",
-    desc: "Compelling scripts for reels, ads, YouTube, and brand films. Creative captions and long-form brand storytelling.",
-    features: [
-      "Ad scripts",
-      "YouTube scripts",
-      "Caption writing",
-      "Brand storytelling",
-    ],
-  },
-  {
-    icon: Youtube,
-    title: "YouTube & Instagram Growth",
-    desc: "Channel strategy, content calendar, SEO optimization, and consistent posting to build an engaged audience.",
-    features: [
-      "Channel strategy",
-      "Content calendar",
-      "SEO optimization",
-      "Thumbnail design",
-    ],
-  },
-];
+const FALLBACK_ICONS = [Video, Camera, Share2, TrendingUp, PenLine, Youtube];
+
+const DEFAULT_CONTENT = {
+  heroTitle: "Our Services",
+  heroSubtitle:
+    "End-to-end creative production services tailored to your brand's needs",
+  heroAccent: "What We Offer",
+  heroBackgroundImage: "/assets/generated/bg-services.dim_1920x1080.jpg",
+  serviceCards: [
+    {
+      title: "Video Editing",
+      desc: "Professional post-production with color grading, sound design, motion graphics, and seamless cuts. Available in any resolution up to 4K.",
+      features: [
+        "Color grading & correction",
+        "Sound design & mixing",
+        "Motion graphics & titles",
+        "Multi-camera editing",
+      ],
+    },
+    {
+      title: "Cinematic Shooting",
+      desc: "On-location or studio cinematography using professional camera, drone, and gimbal stabilizer for breathtaking visuals.",
+      features: [
+        "Professional camera kit",
+        "Drone aerial footage",
+        "Gimbal stabilized shots",
+        "Studio & location shoots",
+      ],
+    },
+    {
+      title: "Social Media Content",
+      desc: "Platform-optimized short-form content: Instagram Reels, YouTube Shorts, TikTok, and Facebook \u2014 engineered for engagement.",
+      features: [
+        "Instagram Reels",
+        "YouTube Shorts",
+        "TikTok content",
+        "Story templates",
+      ],
+    },
+    {
+      title: "Digital Marketing",
+      desc: "Full-funnel digital marketing: paid ads, organic growth strategies, brand positioning, and performance analytics.",
+      features: [
+        "Meta & Google Ads",
+        "Brand strategy",
+        "Analytics & reporting",
+        "Campaign management",
+      ],
+    },
+    {
+      title: "Script & Content Writing",
+      desc: "Compelling scripts for reels, ads, YouTube, and brand films. Creative captions and long-form brand storytelling.",
+      features: [
+        "Ad scripts",
+        "YouTube scripts",
+        "Caption writing",
+        "Brand storytelling",
+      ],
+    },
+    {
+      title: "YouTube & Instagram Growth",
+      desc: "Channel strategy, content calendar, SEO optimization, and consistent posting to build an engaged audience.",
+      features: [
+        "Channel strategy",
+        "Content calendar",
+        "SEO optimization",
+        "Thumbnail design",
+      ],
+    },
+  ],
+  pricingItems: [
+    {
+      itemLabel: "Per 1\u20132 min video",
+      price: "\u20b9500",
+      note: "Full production",
+    },
+    { itemLabel: "Editing only", price: "\u20b9400", note: "Per video" },
+    {
+      itemLabel: "Editing + Camera + Content",
+      price: "\u20b91,200",
+      note: "Complete package",
+    },
+  ],
+};
 
 export default function Services() {
   const [videoCount, setVideoCount] = useState([5]);
+  const { data: pageData } = useGetServicesPageContent();
+  const content = pageData ?? DEFAULT_CONTENT;
+
   const baseRate = 400;
   const discount =
     videoCount[0] >= 15
@@ -97,12 +117,17 @@ export default function Services() {
 
   return (
     <div className="relative">
-      <PageBackground src="/assets/generated/bg-services.dim_1920x1080.jpg" />
+      <PageBackground
+        src={
+          content.heroBackgroundImage ||
+          "/assets/generated/bg-services.dim_1920x1080.jpg"
+        }
+      />
 
       <PageHero
-        title="Our Services"
-        subtitle="End-to-end creative production services tailored to your brand's needs"
-        accent="What We Offer"
+        title={content.heroTitle}
+        subtitle={content.heroSubtitle}
+        accent={content.heroAccent}
       />
 
       {/* Service Cards */}
@@ -110,8 +135,8 @@ export default function Services() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <SectionTitle accent="Services" title="Everything You Need" />
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
-            {services.map((svc, i) => {
-              const Icon = svc.icon;
+            {content.serviceCards.map((svc, i) => {
+              const Icon = FALLBACK_ICONS[i % FALLBACK_ICONS.length];
               return (
                 <motion.div
                   key={svc.title}
@@ -152,21 +177,9 @@ export default function Services() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <SectionTitle accent="Pricing" title="Transparent Pricing" />
           <div className="grid sm:grid-cols-3 gap-6 mt-12">
-            {[
-              {
-                label: "Per 1–2 min video",
-                price: "₹500",
-                note: "Full production",
-              },
-              { label: "Editing only", price: "₹400", note: "Per video" },
-              {
-                label: "Editing + Camera + Content",
-                price: "₹1,200",
-                note: "Complete package",
-              },
-            ].map((item, i) => (
+            {content.pricingItems.map((item, i) => (
               <motion.div
-                key={item.label}
+                key={item.itemLabel}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -174,7 +187,7 @@ export default function Services() {
                 className="text-center p-8 bg-black border border-gold/30 rounded-sm"
               >
                 <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">
-                  {item.label}
+                  {item.itemLabel}
                 </p>
                 <p className="font-display text-3xl font-bold text-gold mb-1">
                   {item.price}
@@ -213,7 +226,7 @@ export default function Services() {
               <div>
                 <p className="text-xs text-muted-foreground">Monthly total</p>
                 <p className="font-display text-2xl font-bold text-gold">
-                  ₹{total.toLocaleString("en-IN")}
+                  \u20b9{total.toLocaleString("en-IN")}
                 </p>
                 {discount < 1 && (
                   <p className="text-xs text-green-400 mt-1">

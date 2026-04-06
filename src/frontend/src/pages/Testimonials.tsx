@@ -3,7 +3,21 @@ import { motion } from "motion/react";
 import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
-import { useGetTestimonials } from "../hooks/useQueries";
+import {
+  useGetTestimonials,
+  useGetTestimonialsPageContent,
+} from "../hooks/useQueries";
+
+const DEFAULT_CONTENT = {
+  heroTitle: "Client Testimonials",
+  heroSubtitle: "Stories of success from the brands we've helped grow",
+  heroAccent: "What Clients Say",
+  heroBackgroundImage: "/assets/generated/bg-testimonials.dim_1920x1080.jpg",
+  ctaHeading: "Ready to Join Our Happy Clients?",
+  ctaBody: "Let's create content that speaks for itself.",
+  ctaButtonLabel: "Start Your Project",
+  ctaButtonLink: "https://wa.me/919487897160",
+};
 
 const fallbackTestimonials = [
   {
@@ -69,6 +83,9 @@ function StarRating({ rating }: { rating: bigint }) {
 
 export default function Testimonials() {
   const { data: backendTestimonials } = useGetTestimonials();
+  const { data: pageData } = useGetTestimonialsPageContent();
+  const content = pageData ?? DEFAULT_CONTENT;
+
   const testimonials =
     backendTestimonials && backendTestimonials.length > 0
       ? backendTestimonials
@@ -76,12 +93,17 @@ export default function Testimonials() {
 
   return (
     <div className="relative">
-      <PageBackground src="/assets/generated/bg-testimonials.dim_1920x1080.jpg" />
+      <PageBackground
+        src={
+          content.heroBackgroundImage ||
+          "/assets/generated/bg-testimonials.dim_1920x1080.jpg"
+        }
+      />
 
       <PageHero
-        title="Client Testimonials"
-        subtitle="Stories of success from the brands we've helped grow"
-        accent="What Clients Say"
+        title={content.heroTitle}
+        subtitle={content.heroSubtitle}
+        accent={content.heroAccent}
       />
 
       <section className="py-24 bg-background">
@@ -122,19 +144,17 @@ export default function Testimonials() {
       <section className="py-16 bg-charcoal border-y border-gold/30 text-center">
         <div className="max-w-2xl mx-auto px-4">
           <h2 className="font-display text-2xl font-bold text-foreground uppercase mb-4">
-            Ready to Join Our Happy Clients?
+            {content.ctaHeading}
           </h2>
-          <p className="text-muted-foreground mb-8">
-            Let's create content that speaks for itself.
-          </p>
+          <p className="text-muted-foreground mb-8">{content.ctaBody}</p>
           <a
-            href="https://wa.me/919487897160"
+            href={content.ctaButtonLink}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-gold text-primary-foreground px-8 py-4 text-sm font-semibold uppercase tracking-widest hover:bg-gold-light transition-all rounded-sm"
             data-ocid="testimonials.primary_button"
           >
-            Start Your Project
+            {content.ctaButtonLabel}
           </a>
         </div>
       </section>

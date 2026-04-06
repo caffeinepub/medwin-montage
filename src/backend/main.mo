@@ -9,9 +9,9 @@ import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
-import Migration "migration";
 
-(with migration = Migration.run)
+
+
 actor {
   include MixinStorage();
 
@@ -44,6 +44,8 @@ actor {
     };
     userProfiles.add(caller, profile);
   };
+
+  // ---- Existing Types ----
 
   type PortfolioVideo = {
     id : Nat;
@@ -261,7 +263,150 @@ actor {
     applicablePlanIds : [Nat];
   };
 
-  // State
+  // ---- NEW: Per-Page Rich Content Types ----
+
+  type ServiceCard = {
+    itemLabel : Text;
+    desc : Text;
+  };
+
+  type HomePageContent = {
+    heroTitle : Text;
+    heroSubtitle : Text;
+    heroAccent : Text;
+    heroBackgroundImage : Text;
+    serviceCards : [ServiceCard];
+    ctaTagline : Text;
+    ctaButtonLabel : Text;
+    ctaButtonLink : Text;
+  };
+
+  type SkillItem = {
+    itemLabel : Text;
+    level : Nat;
+  };
+
+  type MilestoneItem = {
+    year : Text;
+    event : Text;
+  };
+
+  type UspItem = {
+    title : Text;
+    desc : Text;
+  };
+
+  type AboutPageContent = {
+    heroTitle : Text;
+    heroSubtitle : Text;
+    heroAccent : Text;
+    heroBackgroundImage : Text;
+    introHeading : Text;
+    introParagraph1 : Text;
+    introParagraph2 : Text;
+    introTags : [Text];
+    aboutImageUrl : Text;
+    skills : [SkillItem];
+    milestones : [MilestoneItem];
+    usps : [UspItem];
+    ctaHeading : Text;
+    ctaBody : Text;
+    ctaButtonLabel : Text;
+    ctaButtonLink : Text;
+  };
+
+  type ServiceCardFull = {
+    title : Text;
+    desc : Text;
+    features : [Text];
+  };
+
+  type PricingItem = {
+    itemLabel : Text;
+    price : Text;
+    note : Text;
+  };
+
+  type ServicesPageContent = {
+    heroTitle : Text;
+    heroSubtitle : Text;
+    heroAccent : Text;
+    heroBackgroundImage : Text;
+    serviceCards : [ServiceCardFull];
+    pricingItems : [PricingItem];
+  };
+
+  type AreaItem = {
+    title : Text;
+    desc : Text;
+    deliverables : [Text];
+  };
+
+  type DigitalMarketingPageContent = {
+    heroTitle : Text;
+    heroSubtitle : Text;
+    heroAccent : Text;
+    heroBackgroundImage : Text;
+    areas : [AreaItem];
+    ctaHeading : Text;
+    ctaBody : Text;
+    ctaButtonLabel : Text;
+    ctaButtonLink : Text;
+  };
+
+  type ContentAreaItem = {
+    title : Text;
+    desc : Text;
+    types : [Text];
+  };
+
+  type ContentWritingPageContent = {
+    heroTitle : Text;
+    heroSubtitle : Text;
+    heroAccent : Text;
+    heroBackgroundImage : Text;
+    areas : [ContentAreaItem];
+    ctaHeading : Text;
+    ctaBody : Text;
+    ctaButtonLabel : Text;
+    ctaButtonLink : Text;
+  };
+
+  type TestimonialsPageContent = {
+    heroTitle : Text;
+    heroSubtitle : Text;
+    heroAccent : Text;
+    heroBackgroundImage : Text;
+    ctaHeading : Text;
+    ctaBody : Text;
+    ctaButtonLabel : Text;
+    ctaButtonLink : Text;
+  };
+
+  type ContactPageContent = {
+    heroTitle : Text;
+    heroSubtitle : Text;
+    heroAccent : Text;
+    heroBackgroundImage : Text;
+  };
+
+  type PortfolioPageContent = {
+    heroTitle : Text;
+    heroSubtitle : Text;
+    heroAccent : Text;
+    heroBackgroundImage : Text;
+  };
+
+  type PricingPageContent = {
+    heroTitle : Text;
+    heroSubtitle : Text;
+    heroAccent : Text;
+    heroBackgroundImage : Text;
+    choosePlanHeading : Text;
+    choosePlanSubtext : Text;
+  };
+
+  // ---- State ----
   var nextVideoId = 1;
   var nextBrandId = 1;
   var nextServiceId = 1;
@@ -328,6 +473,225 @@ actor {
     offerMessage = "Save ₹1,000 on ALL Plans! Limited time offer ends soon!";
     postOfferMessage = "Season offer has ended. Stay tuned for more deals!";
     applicablePlanIds = [1, 2, 3];
+  };
+
+  // ---- Per-page content stable vars (always initialized with defaults) ----
+
+  var homePageContent : HomePageContent = {
+    heroTitle = "Freelancers · Tamilnadu";
+    heroSubtitle = "Crafting Stories, Capturing Moments";
+    heroAccent = "Creative Studio";
+    heroBackgroundImage = "/assets/generated/bg-home.dim_1920x1080.jpg";
+    serviceCards = [
+      { itemLabel = "Video Editing"; desc = "Professional cuts, color grading & post-production" },
+      { itemLabel = "Cinematography"; desc = "Cinematic shoots with professional equipment" },
+      { itemLabel = "Content Creation"; desc = "Reels, shorts & social media content" },
+      { itemLabel = "Digital Marketing"; desc = "Brand growth & campaign management" },
+      { itemLabel = "Script Writing"; desc = "Compelling scripts for any format" },
+    ];
+    ctaTagline = "Ready to elevate your brand?";
+    ctaButtonLabel = "Get In Touch";
+    ctaButtonLink = "https://wa.me/919487897160";
+  };
+
+  var aboutPageContent : AboutPageContent = {
+    heroTitle = "About Medwin Montage";
+    heroSubtitle = "A creative studio built on passion, precision, and storytelling.";
+    heroAccent = "Who We Are";
+    heroBackgroundImage = "/assets/generated/bg-about.dim_1920x1080.jpg";
+    introHeading = "Who I Am";
+    introParagraph1 = "Medwin Montage began with a passion for storytelling and visual creativity, growing from simple edits into a full-service creative brand delivering high-quality videos, reels, and digital marketing solutions for modern businesses and creators.";
+    introParagraph2 = "With years of hands-on experience behind the lens and at the editing desk, I bring a unique blend of technical mastery and creative vision to every project — ensuring your brand's story is told the way it deserves to be.";
+    introTags = ["Video Editing", "Cinematography", "Motion Graphics", "Digital Marketing", "Content Strategy"];
+    aboutImageUrl = "/assets/generated/about-bts.dim_1200x600.jpg";
+    skills = [
+      { itemLabel = "Video Editing"; level = 95 },
+      { itemLabel = "Color Grading"; level = 90 },
+      { itemLabel = "Cinematography"; level = 88 },
+      { itemLabel = "Motion Graphics"; level = 80 },
+      { itemLabel = "Social Media"; level = 92 },
+      { itemLabel = "Digital Marketing"; level = 85 },
+      { itemLabel = "Script Writing"; level = 82 },
+    ];
+    milestones = [
+      { year = "2020"; event = "Founded Medwin Montage in Thanjavur" },
+      { year = "2021"; event = "First 10 client brands onboarded" },
+      { year = "2022"; event = "Expanded to full cinematography services" },
+      { year = "2023"; event = "1M+ views generated for clients" },
+      { year = "2024"; event = "3M+ views, 15+ happy clients" },
+    ];
+    usps = [
+      { title = "Premium Quality"; desc = "Every frame is crafted with cinematic precision and an eye for detail." },
+      { title = "Full-Service Studio"; desc = "From shoot to final delivery — one team, zero compromise." },
+      { title = "Client-Centered"; desc = "Your vision leads the process. Revisions until you're 100% satisfied." },
+      { title = "On-Time Delivery"; desc = "Consistent, reliable turnaround. Your deadlines are our deadlines." },
+    ];
+    ctaHeading = "Ready to Tell Your Story?";
+    ctaBody = "Let's create something unforgettable together.";
+    ctaButtonLabel = "Get In Touch";
+    ctaButtonLink = "https://wa.me/919487897160";
+  };
+
+  var servicesPageContent : ServicesPageContent = {
+    heroTitle = "Our Services";
+    heroSubtitle = "End-to-end creative production services tailored to your brand's needs";
+    heroAccent = "What We Offer";
+    heroBackgroundImage = "/assets/generated/bg-services.dim_1920x1080.jpg";
+    serviceCards = [
+      { title = "Video Editing"; desc = "Professional post-production with color grading, sound design, motion graphics, and seamless cuts."; features = ["Color grading & correction", "Sound design & mixing", "Motion graphics & titles", "Multi-camera editing"] },
+      { title = "Cinematic Shooting"; desc = "On-location or studio cinematography using professional camera, drone, and gimbal stabilizer."; features = ["Professional camera kit", "Drone aerial footage", "Gimbal stabilized shots", "Studio & location shoots"] },
+      { title = "Social Media Content"; desc = "Platform-optimized short-form content: Instagram Reels, YouTube Shorts, TikTok, and Facebook."; features = ["Instagram Reels", "YouTube Shorts", "TikTok content", "Story templates"] },
+      { title = "Digital Marketing"; desc = "Full-funnel digital marketing: paid ads, organic growth strategies, brand positioning, and analytics."; features = ["Meta & Google Ads", "Brand strategy", "Analytics & reporting", "Campaign management"] },
+      { title = "Script & Content Writing"; desc = "Compelling scripts for reels, ads, YouTube, and brand films. Creative captions and long-form brand storytelling."; features = ["Ad scripts", "YouTube scripts", "Caption writing", "Brand storytelling"] },
+      { title = "YouTube & Instagram Growth"; desc = "Channel strategy, content calendar, SEO optimization, and consistent posting to build an engaged audience."; features = ["Channel strategy", "Content calendar", "SEO optimization", "Thumbnail design"] },
+    ];
+    pricingItems = [
+      { itemLabel = "Per 1-2 min video"; price = "₹500"; note = "Full production" },
+      { itemLabel = "Editing only"; price = "₹400"; note = "Per video" },
+      { itemLabel = "Editing + Camera + Content"; price = "₹1,200"; note = "Complete package" },
+    ];
+  };
+
+  var digitalMarketingPageContent : DigitalMarketingPageContent = {
+    heroTitle = "Digital Marketing";
+    heroSubtitle = "Data-driven marketing strategies to amplify your brand's digital presence";
+    heroAccent = "Grow Your Brand";
+    heroBackgroundImage = "/assets/generated/bg-digital-marketing.dim_1920x1080.jpg";
+    areas = [
+      { title = "Social Media Management"; desc = "Complete management of your brand's social media presence across Instagram, Facebook, YouTube and more."; deliverables = ["Daily/weekly post scheduling", "Engagement & community management", "Performance analytics", "Competitor analysis"] },
+      { title = "Ad Campaign Creation"; desc = "Strategic paid advertising campaigns on Meta, Google, and YouTube — designed to convert, not just impress."; deliverables = ["Ad creative design", "Audience targeting", "A/B testing", "ROI reporting"] },
+      { title = "Brand Promotion Strategies"; desc = "Customized brand positioning and promotion strategies that set you apart from competitors."; deliverables = ["Brand identity audit", "Market positioning", "Content strategy", "Influencer outreach"] },
+      { title = "Content Planning"; desc = "30/60/90-day content calendars aligned with your campaigns, seasons, and business goals."; deliverables = ["Monthly content calendar", "Theme & campaign ideation", "Caption & hashtag strategy", "Platform-specific optimization"] },
+    ];
+    ctaHeading = "Ready to Grow Your Brand?";
+    ctaBody = "Let's craft a digital marketing strategy that converts visitors into loyal customers.";
+    ctaButtonLabel = "Get a Free Consultation";
+    ctaButtonLink = "https://wa.me/919487897160";
+  };
+
+  var contentWritingPageContent : ContentWritingPageContent = {
+    heroTitle = "Content Writing";
+    heroSubtitle = "Words that work — scripts, captions, and stories that move your audience";
+    heroAccent = "Storytelling";
+    heroBackgroundImage = "/assets/generated/bg-content-writing.dim_1920x1080.jpg";
+    areas = [
+      { title = "Script Writing"; desc = "Compelling scripts for Reels, YouTube videos, ads, and brand films. Every word chosen to captivate and convert."; types = ["Instagram Reel scripts", "YouTube video scripts", "Ad scripts (15s, 30s, 60s)", "Brand film narratives"] },
+      { title = "Caption Writing"; desc = "Platform-native captions that drive engagement, reflect your brand voice, and include strategic hashtag research."; types = ["Instagram captions", "LinkedIn posts", "Facebook content", "Hashtag strategies"] },
+      { title = "Creative Content Creation"; desc = "Original content ideas that break through the noise — trend-driven yet timeless for your brand."; types = ["Content ideation", "Trending format adaptation", "Series concepts", "Campaign themes"] },
+      { title = "Brand Storytelling"; desc = "Long-form and short-form narratives that define your brand identity and connect emotionally with your audience."; types = ["Brand origin stories", "Founder narratives", "Product storytelling", "Customer journey content"] },
+    ];
+    ctaHeading = "Your Story, Perfectly Told";
+    ctaBody = "Every brand has a unique story. Let us craft yours with words that resonate, engage, and convert.";
+    ctaButtonLabel = "Start Writing Together";
+    ctaButtonLink = "mailto:medwinmontage@gmail.com";
+  };
+
+  var testimonialsPageContent : TestimonialsPageContent = {
+    heroTitle = "Client Testimonials";
+    heroSubtitle = "Stories of success from the brands we've helped grow";
+    heroAccent = "What Clients Say";
+    heroBackgroundImage = "/assets/generated/bg-testimonials.dim_1920x1080.jpg";
+    ctaHeading = "Ready to Join Our Happy Clients?";
+    ctaBody = "Let's create content that speaks for itself.";
+    ctaButtonLabel = "Start Your Project";
+    ctaButtonLink = "https://wa.me/919487897160";
+  };
+
+  var contactPageContent : ContactPageContent = {
+    heroTitle = "Get in Touch";
+    heroSubtitle = "Let us discuss your next creative project";
+    heroAccent = "Contact Us";
+    heroBackgroundImage = "/assets/generated/bg-contact.dim_1920x1080.jpg";
+  };
+
+  var portfolioPageContent : PortfolioPageContent = {
+    heroTitle = "Portfolio";
+    heroSubtitle = "A showcase of our finest cinematic work";
+    heroAccent = "Featured Work";
+    heroBackgroundImage = "/assets/generated/bg-portfolio.dim_1920x1080.jpg";
+  };
+
+  var pricingPageContent : PricingPageContent = {
+    heroTitle = "Pricing";
+    heroSubtitle = "Transparent pricing for every project";
+    heroAccent = "Choose Your Plan";
+    heroBackgroundImage = "/assets/generated/bg-pricing.dim_1920x1080.jpg";
+    choosePlanHeading = "Choose Your Plan";
+    choosePlanSubtext = "🎉 Season Offer — Save ₹1,000 on Standard & Premium! Offer ends April 10th.";
+  };
+
+  // ---- Per-page content queries ----
+
+  public query func getHomePageContent() : async HomePageContent { homePageContent };
+  public shared ({ caller }) func updateHomePageContent(content : HomePageContent) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized");
+    };
+    homePageContent := content;
+  };
+
+  public query func getAboutPageContent() : async AboutPageContent { aboutPageContent };
+  public shared ({ caller }) func updateAboutPageContent(content : AboutPageContent) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized");
+    };
+    aboutPageContent := content;
+  };
+
+  public query func getServicesPageContent() : async ServicesPageContent { servicesPageContent };
+  public shared ({ caller }) func updateServicesPageContent(content : ServicesPageContent) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized");
+    };
+    servicesPageContent := content;
+  };
+
+  public query func getDigitalMarketingPageContent() : async DigitalMarketingPageContent { digitalMarketingPageContent };
+  public shared ({ caller }) func updateDigitalMarketingPageContent(content : DigitalMarketingPageContent) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized");
+    };
+    digitalMarketingPageContent := content;
+  };
+
+  public query func getContentWritingPageContent() : async ContentWritingPageContent { contentWritingPageContent };
+  public shared ({ caller }) func updateContentWritingPageContent(content : ContentWritingPageContent) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized");
+    };
+    contentWritingPageContent := content;
+  };
+
+  public query func getTestimonialsPageContent() : async TestimonialsPageContent { testimonialsPageContent };
+  public shared ({ caller }) func updateTestimonialsPageContent(content : TestimonialsPageContent) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized");
+    };
+    testimonialsPageContent := content;
+  };
+
+  public query func getContactPageContent() : async ContactPageContent { contactPageContent };
+  public shared ({ caller }) func updateContactPageContent(content : ContactPageContent) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized");
+    };
+    contactPageContent := content;
+  };
+
+  public query func getPortfolioPageContent() : async PortfolioPageContent { portfolioPageContent };
+  public shared ({ caller }) func updatePortfolioPageContent(content : PortfolioPageContent) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized");
+    };
+    portfolioPageContent := content;
+  };
+
+  public query func getPricingPageContent() : async PricingPageContent { pricingPageContent };
+  public shared ({ caller }) func updatePricingPageContent(content : PricingPageContent) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized");
+    };
+    pricingPageContent := content;
   };
 
   // ---- CRUD for Full Pricing Plans ----
@@ -407,7 +771,7 @@ actor {
     fullPricingPlans.values().toArray();
   };
 
-  public query ({ caller }) func getEnabledFullPricingPlans() : async [FullPricingPlan] {
+  public query func getEnabledFullPricingPlans() : async [FullPricingPlan] {
     fullPricingPlans.values().filter(func(p) { p.enabled }).toArray();
   };
 
@@ -419,7 +783,7 @@ actor {
     seasonOfferSettings := settings;
   };
 
-  public query ({ caller }) func getSeasonOfferSettings() : async SeasonOfferSettings { seasonOfferSettings };
+  public query func getSeasonOfferSettings() : async SeasonOfferSettings { seasonOfferSettings };
 
   // ---- Portfolio Videos ----
   public shared ({ caller }) func addPortfolioVideo(video : VideoInput) : async Nat {
@@ -460,7 +824,7 @@ actor {
     };
   };
 
-  public query ({ caller }) func getPublishedVideos() : async [PortfolioVideo] {
+  public query func getPublishedVideos() : async [PortfolioVideo] {
     portfolioVideos.values().filter(func(v) { v.published }).toArray();
   };
 
@@ -471,11 +835,11 @@ actor {
     portfolioVideos.values().toArray();
   };
 
-  public query ({ caller }) func getVideosByCategory(category : Text) : async [PortfolioVideo] {
+  public query func getVideosByCategory(category : Text) : async [PortfolioVideo] {
     portfolioVideos.values().filter(func(v) { v.published and v.category == category }).toArray();
   };
 
-  public query ({ caller }) func getVideoById(videoId : Nat) : async ?PortfolioVideo {
+  public query func getVideoById(videoId : Nat) : async ?PortfolioVideo {
     portfolioVideos.get(videoId);
   };
 
@@ -523,7 +887,7 @@ actor {
     };
   };
 
-  public query ({ caller }) func getPublishedBrands() : async [Brand] {
+  public query func getPublishedBrands() : async [Brand] {
     brandPartners.values().filter(func(b) { b.published }).toArray();
   };
 
@@ -534,7 +898,7 @@ actor {
     brandPartners.values().toArray();
   };
 
-  public query ({ caller }) func getBrandsByCategory(category : Text) : async [Brand] {
+  public query func getBrandsByCategory(category : Text) : async [Brand] {
     brandPartners.values().filter(func(b) { b.published and b.category == category }).toArray();
   };
 
@@ -575,7 +939,7 @@ actor {
     };
   };
 
-  public query ({ caller }) func getPublishedServices() : async [Service] {
+  public query func getPublishedServices() : async [Service] {
     services.values().filter(func(s) { s.published }).toArray();
   };
 
@@ -623,7 +987,7 @@ actor {
     };
   };
 
-  public query ({ caller }) func getPublishedPricingPlans() : async [PricingPlan] {
+  public query func getPublishedPricingPlans() : async [PricingPlan] {
     pricingPlans.values().filter(func(p) { p.published }).toArray();
   };
 
@@ -669,7 +1033,7 @@ actor {
     };
   };
 
-  public query ({ caller }) func getPublishedTestimonials() : async [Testimonial] {
+  public query func getPublishedTestimonials() : async [Testimonial] {
     testimonials.values().filter(func(t) { t.published }).toArray();
   };
 
@@ -712,7 +1076,7 @@ actor {
     };
   };
 
-  public query ({ caller }) func getPublishedFAQs() : async [FAQItem] {
+  public query func getPublishedFAQs() : async [FAQItem] {
     faqs.values().filter(func(f) { f.published }).toArray();
   };
 
@@ -724,7 +1088,7 @@ actor {
   };
 
   // ---- Contact Enquiries ----
-  public shared ({ caller }) func submitContactEnquiry(name : Text, email : Text, phone : Text, message : Text, selectedPlan : Text) : async Nat {
+  public shared func submitContactEnquiry(name : Text, email : Text, phone : Text, message : Text, selectedPlan : Text) : async Nat {
     let id = nextContactId;
     nextContactId += 1;
     let storedMessage = if (selectedPlan == "") { message } else {
@@ -749,10 +1113,10 @@ actor {
     officeProfile := profile;
   };
 
-  public query ({ caller }) func getOfficeProfile() : async OfficeProfile { officeProfile };
+  public query func getOfficeProfile() : async OfficeProfile { officeProfile };
 
-  // ---- Page Content ----
-  public query ({ caller }) func getPageContent(pageId : Text) : async ?PageContent {
+  // ---- Legacy Page Content (kept for backward compatibility) ----
+  public query func getPageContent(pageId : Text) : async ?PageContent {
     pageContents.get(pageId);
   };
 
@@ -778,7 +1142,7 @@ actor {
     presetPackages.add(pkg.id, pkg);
   };
 
-  public query ({ caller }) func getPresetPackages() : async [PresetPackage] {
+  public query func getPresetPackages() : async [PresetPackage] {
     presetPackages.values().filter(func(p) { p.enabled }).toArray();
   };
 
@@ -797,7 +1161,7 @@ actor {
     reelPricing := pricing;
   };
 
-  public query ({ caller }) func getReelPricing() : async ReelPricing { reelPricing };
+  public query func getReelPricing() : async ReelPricing { reelPricing };
 
   // ---- Monthly Package ----
   public shared ({ caller }) func updateMonthlyPackage(pkg : MonthlyPackage) : async () {
@@ -807,7 +1171,7 @@ actor {
     monthlyPackage := pkg;
   };
 
-  public query ({ caller }) func getMonthlyPackage() : async MonthlyPackage { monthlyPackage };
+  public query func getMonthlyPackage() : async MonthlyPackage { monthlyPackage };
 
   // ---- Slider Rates ----
   public shared ({ caller }) func updateSliderRates(rates : SliderRates) : async () {
@@ -817,7 +1181,7 @@ actor {
     sliderRates := rates;
   };
 
-  public query ({ caller }) func getSliderRates() : async SliderRates { sliderRates };
+  public query func getSliderRates() : async SliderRates { sliderRates };
 
   // ---- Site Stats ----
   public shared ({ caller }) func updateSiteStats(stats : SiteStats) : async () {
@@ -827,17 +1191,17 @@ actor {
     siteStats := stats;
   };
 
-  public query ({ caller }) func getSiteStats() : async SiteStats { siteStats };
+  public query func getSiteStats() : async SiteStats { siteStats };
 
   // ---- Combined queries ----
-  public query ({ caller }) func publicCombinedVideosBrands() : async { videos : [PortfolioVideo]; brands : [Brand] } {
+  public query func publicCombinedVideosBrands() : async { videos : [PortfolioVideo]; brands : [Brand] } {
     {
       videos = portfolioVideos.values().filter(func(v) { v.published }).toArray();
       brands = brandPartners.values().filter(func(b) { b.published }).toArray();
     };
   };
 
-  public query ({ caller }) func getServicesAndPricing() : async { services : [Service]; pricing : [PricingPlan] } {
+  public query func getServicesAndPricing() : async { services : [Service]; pricing : [PricingPlan] } {
     {
       services = services.values().filter(func(s) { s.published }).toArray();
       pricing = pricingPlans.values().filter(func(p) { p.published }).toArray();
@@ -1009,7 +1373,6 @@ actor {
     };
     nextFAQId := fId;
 
-    // Seed preset packages
     presetPackages.add(1, { id = 1; name = "Basic"; price = 3099; features = ["7 Video Edits (Reels/Shorts/Videos)", "Basic Cuts & Transitions", "Simple Color Correction", "2 Captions + Script Ideas", "Posting Guidance"]; deliveryDays = 3; enabled = true });
     presetPackages.add(2, { id = 2; name = "Standard"; price = 7999; features = ["10 Video Edits (Reels/Shorts/Videos)", "Advanced Color Grading", "Sound Design", "4 Captions + Script Writing", "Hashtag Strategy", "Social Media Handling", "Basic Growth Strategy"]; deliveryDays = 2; enabled = true });
     presetPackages.add(3, { id = 3; name = "Premium"; price = 9999; features = ["15 Video Edits (Reels/Shorts/Videos)", "Shoot Session Included", "Cinematic Editing + Effects", "Pro Sound Design", "Full Content Planning", "Social Media Management", "Branding + Optimization", "Performance Report", "Priority Delivery"]; deliveryDays = 1; enabled = true });
@@ -1020,104 +1383,8 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can seed data");
     };
-    let pages : [PageContent] = [
-      {
-        pageId = "home";
-        heroTitle = "Medwin Montage";
-        heroSubtitle = "Crafting Stories, Capturing Moments";
-        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
-        sections = [
-          { id = "services"; heading = "Your Vision, My Edit"; description = "Full-service creative production"; imageUrl = ""; visible = true },
-          { id = "featured"; heading = "Featured Work"; description = "A curated selection of recent projects"; imageUrl = ""; visible = true },
-          { id = "stats"; heading = "Our Impact"; description = "Numbers that speak for themselves"; imageUrl = ""; visible = true },
-          { id = "brands"; heading = "Brands Worked With"; description = "Trusted by leading businesses across Thanjavur"; imageUrl = ""; visible = true },
-        ];
-      },
-      {
-        pageId = "about";
-        heroTitle = "About Medwin Montage";
-        heroSubtitle = "The story behind the lens";
-        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
-        sections = [
-          { id = "story"; heading = "Our Story"; description = "Medwin Montage is a freelance creative studio based in Thanjavur."; imageUrl = ""; visible = true },
-          { id = "mission"; heading = "Our Mission"; description = "Crafting visually compelling stories."; imageUrl = ""; visible = true },
-          { id = "skills"; heading = "Our Skills"; description = "From pre-production to final delivery."; imageUrl = ""; visible = true },
-        ];
-      },
-      {
-        pageId = "portfolio";
-        heroTitle = "Portfolio";
-        heroSubtitle = "A showcase of our finest cinematic work";
-        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
-        sections = [
-          { id = "reels"; heading = "Reels"; description = "Short-form video content for social media"; imageUrl = ""; visible = true },
-          { id = "ads"; heading = "Ads"; description = "Commercial and promotional videos"; imageUrl = ""; visible = true },
-          { id = "events"; heading = "Events"; description = "Event coverage and highlights"; imageUrl = ""; visible = true },
-          { id = "youtube"; heading = "YouTube Videos"; description = "Long-form YouTube content"; imageUrl = ""; visible = true },
-        ];
-      },
-      {
-        pageId = "pricing";
-        heroTitle = "Pricing";
-        heroSubtitle = "Transparent pricing for every project";
-        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
-        sections = [
-          { id = "presets"; heading = "Preset Packages"; description = "Ready-made packages for every need"; imageUrl = ""; visible = true },
-          { id = "reel"; heading = "Per Reel Pricing"; description = "Pay per video with flexible options"; imageUrl = ""; visible = true },
-          { id = "monthly"; heading = "Monthly Package"; description = "Best value for consistent content"; imageUrl = ""; visible = true },
-          { id = "calculator"; heading = "Price Calculator"; description = "Build your custom package"; imageUrl = ""; visible = true },
-        ];
-      },
-      {
-        pageId = "contact";
-        heroTitle = "Get in Touch";
-        heroSubtitle = "Let us discuss your next creative project";
-        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
-        sections = [
-          { id = "form"; heading = "Send Us a Message"; description = "Fill out the form below"; imageUrl = ""; visible = true },
-          { id = "details"; heading = "Contact Details"; description = "Reach us directly"; imageUrl = ""; visible = true },
-          { id = "location"; heading = "Our Location"; description = "Visit us in Thanjavur"; imageUrl = ""; visible = true },
-        ];
-      },
-      {
-        pageId = "services";
-        heroTitle = "Our Services";
-        heroSubtitle = "Everything you need for your visual brand";
-        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
-        sections = [
-          { id = "list"; heading = "What We Offer"; description = "Professional creative services"; imageUrl = ""; visible = true },
-        ];
-      },
-      {
-        pageId = "digital-marketing";
-        heroTitle = "Digital Marketing";
-        heroSubtitle = "Grow your brand online";
-        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
-        sections = [
-          { id = "overview"; heading = "Digital Marketing Services"; description = "Full campaign execution"; imageUrl = ""; visible = true },
-        ];
-      },
-      {
-        pageId = "content-writing";
-        heroTitle = "Content Writing";
-        heroSubtitle = "Words that move, persuade, and convert";
-        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
-        sections = [
-          { id = "overview"; heading = "Content Writing Services"; description = "Professional copywriting"; imageUrl = ""; visible = true },
-        ];
-      },
-      {
-        pageId = "testimonials";
-        heroTitle = "Client Testimonials";
-        heroSubtitle = "What our clients say";
-        heroBackgroundImage = "/assets/generated/hero-cinematographer.dim_1920x1080.jpg";
-        sections = [
-          { id = "reviews"; heading = "Client Reviews"; description = "Real feedback from our clients"; imageUrl = ""; visible = true },
-        ];
-      },
-    ];
-    for (page in pages.values()) {
-      pageContents.add(page.pageId, page);
-    };
+    // Legacy seed - now page content is always initialized with defaults above
+    // This function is kept for backward compatibility
   };
+
 };

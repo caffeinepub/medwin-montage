@@ -15,13 +15,25 @@ import { toast } from "sonner";
 import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
-import { useGetFAQs, useSubmitContactForm } from "../hooks/useQueries";
+import {
+  useGetContactPageContent,
+  useGetFAQs,
+  useSubmitContactForm,
+} from "../hooks/useQueries";
+
+const DEFAULT_CONTENT = {
+  heroTitle: "Get In Touch",
+  heroSubtitle:
+    "Let's create something cinematic together \u2014 reach out via WhatsApp or Email",
+  heroAccent: "Contact Us",
+  heroBackgroundImage: "/assets/generated/bg-contact.dim_1920x1080.jpg",
+};
 
 const fallbackFAQs = [
   {
     question: "What is your turnaround time for video editing?",
     answer:
-      "Standard turnaround is 3–5 business days for 1–2 minute videos. Rush delivery (24–48 hrs) is available at an additional charge.",
+      "Standard turnaround is 3\u20135 business days for 1\u20132 minute videos. Rush delivery (24\u201348 hrs) is available at an additional charge.",
   },
   {
     question: "Do you provide raw footage along with the edited video?",
@@ -60,6 +72,8 @@ export default function Contact() {
   const [selectedPlan, setSelectedPlan] = useState("");
   const submit = useSubmitContactForm();
   const { data: backendFAQs } = useGetFAQs();
+  const { data: pageData } = useGetContactPageContent();
+  const content = pageData ?? DEFAULT_CONTENT;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -83,7 +97,7 @@ export default function Contact() {
     try {
       await submit.mutateAsync({ ...form, selectedPlan });
     } catch {
-      // Backend save failed, but WhatsApp was already opened — that's fine
+      // Backend save failed, but WhatsApp was already opened \u2014 that's fine
     }
 
     toast.success("Message sent! Redirecting to WhatsApp...");
@@ -93,12 +107,17 @@ export default function Contact() {
 
   return (
     <div className="relative">
-      <PageBackground src="/assets/generated/bg-contact.dim_1920x1080.jpg" />
+      <PageBackground
+        src={
+          content.heroBackgroundImage ||
+          "/assets/generated/bg-contact.dim_1920x1080.jpg"
+        }
+      />
 
       <PageHero
-        title="Get In Touch"
-        subtitle="Let's create something cinematic together — reach out via WhatsApp or Email"
-        accent="Contact Us"
+        title={content.heroTitle}
+        subtitle={content.heroSubtitle}
+        accent={content.heroAccent}
       />
 
       <section className="py-24 bg-background">
@@ -225,7 +244,7 @@ export default function Contact() {
                         </p>
                       </div>
                       <span className="text-xs border border-gold/40 text-gold px-4 py-1.5 rounded-full uppercase tracking-widest">
-                        View on Google Maps →
+                        View on Google Maps \u2192
                       </span>
                     </div>
                   </div>
@@ -248,7 +267,8 @@ export default function Contact() {
                   data-ocid="contact.panel"
                 >
                   <p className="text-gold text-sm font-semibold uppercase tracking-wide">
-                    Booking: {selectedPlan} Plan — Fill in your details below
+                    Booking: {selectedPlan} Plan \u2014 Fill in your details
+                    below
                   </p>
                 </motion.div>
               )}

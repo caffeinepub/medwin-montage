@@ -3,71 +3,90 @@ import { motion } from "motion/react";
 import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
+import { useGetContentWritingPageContent } from "../hooks/useQueries";
 
-const areas = [
-  {
-    icon: PenLine,
-    title: "Script Writing",
-    desc: "Compelling scripts for Reels, YouTube videos, ads, and brand films. Every word chosen to captivate and convert.",
-    types: [
-      "Instagram Reel scripts",
-      "YouTube video scripts",
-      "Ad scripts (15s, 30s, 60s)",
-      "Brand film narratives",
-    ],
-  },
-  {
-    icon: MessageSquare,
-    title: "Caption Writing",
-    desc: "Platform-native captions that drive engagement, reflect your brand voice, and include strategic hashtag research.",
-    types: [
-      "Instagram captions",
-      "LinkedIn posts",
-      "Facebook content",
-      "Hashtag strategies",
-    ],
-  },
-  {
-    icon: Sparkles,
-    title: "Creative Content Creation",
-    desc: "Original content ideas that break through the noise — trend-driven yet timeless for your brand.",
-    types: [
-      "Content ideation",
-      "Trending format adaptation",
-      "Series concepts",
-      "Campaign themes",
-    ],
-  },
-  {
-    icon: BookOpen,
-    title: "Brand Storytelling",
-    desc: "Long-form and short-form narratives that define your brand identity and connect emotionally with your audience.",
-    types: [
-      "Brand origin stories",
-      "Founder narratives",
-      "Product storytelling",
-      "Customer journey content",
-    ],
-  },
-];
+const FALLBACK_ICONS = [PenLine, MessageSquare, Sparkles, BookOpen];
+
+const DEFAULT_CONTENT = {
+  heroTitle: "Content Writing",
+  heroSubtitle:
+    "Words that work — scripts, captions, and stories that move your audience",
+  heroAccent: "Storytelling",
+  heroBackgroundImage: "/assets/generated/bg-content-writing.dim_1920x1080.jpg",
+  areas: [
+    {
+      title: "Script Writing",
+      desc: "Compelling scripts for Reels, YouTube videos, ads, and brand films. Every word chosen to captivate and convert.",
+      types: [
+        "Instagram Reel scripts",
+        "YouTube video scripts",
+        "Ad scripts (15s, 30s, 60s)",
+        "Brand film narratives",
+      ],
+    },
+    {
+      title: "Caption Writing",
+      desc: "Platform-native captions that drive engagement, reflect your brand voice, and include strategic hashtag research.",
+      types: [
+        "Instagram captions",
+        "LinkedIn posts",
+        "Facebook content",
+        "Hashtag strategies",
+      ],
+    },
+    {
+      title: "Creative Content Creation",
+      desc: "Original content ideas that break through the noise — trend-driven yet timeless for your brand.",
+      types: [
+        "Content ideation",
+        "Trending format adaptation",
+        "Series concepts",
+        "Campaign themes",
+      ],
+    },
+    {
+      title: "Brand Storytelling",
+      desc: "Long-form and short-form narratives that define your brand identity and connect emotionally with your audience.",
+      types: [
+        "Brand origin stories",
+        "Founder narratives",
+        "Product storytelling",
+        "Customer journey content",
+      ],
+    },
+  ],
+  ctaHeading: "Your Story, Perfectly Told",
+  ctaBody:
+    "Every brand has a unique story. Let us craft yours with words that resonate, engage, and convert.",
+  ctaButtonLabel: "Start Writing Together",
+  ctaButtonLink: "mailto:medwinmontage@gmail.com",
+};
 
 export default function ContentWriting() {
+  const { data: pageData } = useGetContentWritingPageContent();
+  const content = pageData ?? DEFAULT_CONTENT;
+
   return (
     <div className="relative">
-      <PageBackground src="/assets/generated/bg-content-writing.dim_1920x1080.jpg" />
+      <PageBackground
+        src={
+          content.heroBackgroundImage ||
+          "/assets/generated/bg-content-writing.dim_1920x1080.jpg"
+        }
+      />
 
       <PageHero
-        title="Content Writing"
-        subtitle="Words that work — scripts, captions, and stories that move your audience"
-        accent="Storytelling"
+        title={content.heroTitle}
+        subtitle={content.heroSubtitle}
+        accent={content.heroAccent}
       />
 
       <section className="py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <SectionTitle accent="Content" title="Writing Services" />
           <div className="grid md:grid-cols-2 gap-8 mt-12">
-            {areas.map((area, i) => {
-              const Icon = area.icon;
+            {content.areas.map((area, i) => {
+              const Icon = FALLBACK_ICONS[i % FALLBACK_ICONS.length];
               return (
                 <motion.div
                   key={area.title}
@@ -106,18 +125,17 @@ export default function ContentWriting() {
       <section className="py-16 bg-charcoal border-y border-gold/30">
         <div className="max-w-2xl mx-auto px-4 text-center">
           <h2 className="font-display text-2xl font-bold text-foreground uppercase mb-4">
-            Your Story, Perfectly Told
+            {content.ctaHeading}
           </h2>
           <p className="text-muted-foreground mb-8 text-sm">
-            Every brand has a unique story. Let us craft yours with words that
-            resonate, engage, and convert.
+            {content.ctaBody}
           </p>
           <a
-            href="mailto:medwinmontage@gmail.com"
+            href={content.ctaButtonLink}
             className="inline-flex items-center gap-2 bg-gold text-primary-foreground px-8 py-4 text-sm uppercase tracking-widest hover:bg-gold-light transition-all rounded-sm"
             data-ocid="content.primary_button"
           >
-            Start Writing Together
+            {content.ctaButtonLabel}
           </a>
         </div>
       </section>

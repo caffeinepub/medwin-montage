@@ -206,6 +206,131 @@ export enum UserRole {
     user = "user",
     guest = "guest"
 }
+// ─── Per-Page Content Types ──────────────────────────────────────────────────
+export interface ServiceCard {
+    itemLabel: string;
+    desc: string;
+}
+export interface HomePageContent {
+    heroTitle: string;
+    heroSubtitle: string;
+    heroAccent: string;
+    heroBackgroundImage: string;
+    serviceCards: Array<ServiceCard>;
+    ctaTagline: string;
+    ctaButtonLabel: string;
+    ctaButtonLink: string;
+}
+export interface SkillItem {
+    itemLabel: string;
+    level: bigint;
+}
+export interface MilestoneItem {
+    year: string;
+    event: string;
+}
+export interface UspItem {
+    title: string;
+    desc: string;
+}
+export interface AboutPageContent {
+    heroTitle: string;
+    heroSubtitle: string;
+    heroAccent: string;
+    heroBackgroundImage: string;
+    introHeading: string;
+    introParagraph1: string;
+    introParagraph2: string;
+    introTags: Array<string>;
+    aboutImageUrl: string;
+    skills: Array<SkillItem>;
+    milestones: Array<MilestoneItem>;
+    usps: Array<UspItem>;
+    ctaHeading: string;
+    ctaBody: string;
+    ctaButtonLabel: string;
+    ctaButtonLink: string;
+}
+export interface ServiceCardFull {
+    title: string;
+    desc: string;
+    features: Array<string>;
+}
+export interface PricingItem {
+    itemLabel: string;
+    price: string;
+    note: string;
+}
+export interface ServicesPageContent {
+    heroTitle: string;
+    heroSubtitle: string;
+    heroAccent: string;
+    heroBackgroundImage: string;
+    serviceCards: Array<ServiceCardFull>;
+    pricingItems: Array<PricingItem>;
+}
+export interface AreaItem {
+    title: string;
+    desc: string;
+    deliverables: Array<string>;
+}
+export interface DigitalMarketingPageContent {
+    heroTitle: string;
+    heroSubtitle: string;
+    heroAccent: string;
+    heroBackgroundImage: string;
+    areas: Array<AreaItem>;
+    ctaHeading: string;
+    ctaBody: string;
+    ctaButtonLabel: string;
+    ctaButtonLink: string;
+}
+export interface ContentAreaItem {
+    title: string;
+    desc: string;
+    types: Array<string>;
+}
+export interface ContentWritingPageContent {
+    heroTitle: string;
+    heroSubtitle: string;
+    heroAccent: string;
+    heroBackgroundImage: string;
+    areas: Array<ContentAreaItem>;
+    ctaHeading: string;
+    ctaBody: string;
+    ctaButtonLabel: string;
+    ctaButtonLink: string;
+}
+export interface TestimonialsPageContent {
+    heroTitle: string;
+    heroSubtitle: string;
+    heroAccent: string;
+    heroBackgroundImage: string;
+    ctaHeading: string;
+    ctaBody: string;
+    ctaButtonLabel: string;
+    ctaButtonLink: string;
+}
+export interface ContactPageContent {
+    heroTitle: string;
+    heroSubtitle: string;
+    heroAccent: string;
+    heroBackgroundImage: string;
+}
+export interface PortfolioPageContent {
+    heroTitle: string;
+    heroSubtitle: string;
+    heroAccent: string;
+    heroBackgroundImage: string;
+}
+export interface PricingPageContent {
+    heroTitle: string;
+    heroSubtitle: string;
+    heroAccent: string;
+    heroBackgroundImage: string;
+    choosePlanHeading: string;
+    choosePlanSubtext: string;
+}
 export interface backendInterface {
     addBrandPartner(brand: BrandInput): Promise<bigint>;
     addFAQItem(faq: FAQInput): Promise<bigint>;
@@ -285,4 +410,23 @@ export interface backendInterface {
     updateService(service: ServiceFullInput): Promise<void>;
     updateSiteStats(stats: SiteStats): Promise<void>;
     updateSliderRates(rates: SliderRates): Promise<void>;
+    // ─── Per-Page Content Methods ──────────────────────────────────────────
+    getHomePageContent(): Promise<HomePageContent>;
+    updateHomePageContent(content: HomePageContent): Promise<void>;
+    getAboutPageContent(): Promise<AboutPageContent>;
+    updateAboutPageContent(content: AboutPageContent): Promise<void>;
+    getServicesPageContent(): Promise<ServicesPageContent>;
+    updateServicesPageContent(content: ServicesPageContent): Promise<void>;
+    getDigitalMarketingPageContent(): Promise<DigitalMarketingPageContent>;
+    updateDigitalMarketingPageContent(content: DigitalMarketingPageContent): Promise<void>;
+    getContentWritingPageContent(): Promise<ContentWritingPageContent>;
+    updateContentWritingPageContent(content: ContentWritingPageContent): Promise<void>;
+    getTestimonialsPageContent(): Promise<TestimonialsPageContent>;
+    updateTestimonialsPageContent(content: TestimonialsPageContent): Promise<void>;
+    getContactPageContent(): Promise<ContactPageContent>;
+    updateContactPageContent(content: ContactPageContent): Promise<void>;
+    getPortfolioPageContent(): Promise<PortfolioPageContent>;
+    updatePortfolioPageContent(content: PortfolioPageContent): Promise<void>;
+    getPricingPageContent(): Promise<PricingPageContent>;
+    updatePricingPageContent(content: PricingPageContent): Promise<void>;
 }

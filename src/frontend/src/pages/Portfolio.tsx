@@ -4,7 +4,10 @@ import { motion } from "motion/react";
 import PageBackground from "../components/PageBackground";
 import PageHero from "../components/PageHero";
 import SectionTitle from "../components/SectionTitle";
-import { useGetPublishedVideos } from "../hooks/useQueries";
+import {
+  useGetPortfolioPageContent,
+  useGetPublishedVideos,
+} from "../hooks/useQueries";
 
 const CATEGORIES = [
   { key: "reels", label: "Reels" },
@@ -41,34 +44,49 @@ const FALLBACK_VIDEOS = [
   {
     id: 3n,
     vimeoId: "1176462602",
-    title: "Product Launch Reel",
-    category: "reels",
-    description: "High-energy product launch reel.",
+    title: "Brand Story Film",
+    category: "youtube",
+    description: "Long-form brand documentary.",
     published: true,
   },
   {
     id: 4n,
     vimeoId: "1176462586",
-    title: "YouTube Channel Intro",
-    category: "youtube",
-    description: "Channel intro video for a YouTube creator.",
+    title: "Product Showcase",
+    category: "ads",
+    description: "Product reveal and showcase video.",
     published: true,
   },
 ];
 
+const DEFAULT_CONTENT = {
+  heroTitle: "Portfolio",
+  heroSubtitle: "Real work. Real results. Watch our projects in action.",
+  heroAccent: "Our Work",
+  heroBackgroundImage: "/assets/generated/bg-portfolio.dim_1920x1080.jpg",
+};
+
 export default function Portfolio() {
   const { data: backendVideos } = useGetPublishedVideos();
+  const { data: pageData } = useGetPortfolioPageContent();
+  const content = pageData ?? DEFAULT_CONTENT;
+
   const videos =
     backendVideos && backendVideos.length > 0 ? backendVideos : FALLBACK_VIDEOS;
 
   return (
     <div className="relative">
-      <PageBackground src="/assets/generated/bg-portfolio.dim_1920x1080.jpg" />
+      <PageBackground
+        src={
+          content.heroBackgroundImage ||
+          "/assets/generated/bg-portfolio.dim_1920x1080.jpg"
+        }
+      />
 
       <PageHero
-        title="Portfolio"
-        subtitle="Real work. Real results. Watch our projects in action."
-        accent="Our Work"
+        title={content.heroTitle}
+        subtitle={content.heroSubtitle}
+        accent={content.heroAccent}
       />
 
       <section className="py-24 bg-background">
@@ -99,11 +117,11 @@ export default function Portfolio() {
               const catDescriptions: Record<string, string> = {
                 reels:
                   "Short-form vertical videos crafted for maximum engagement on Instagram, TikTok & YouTube Shorts.",
-                ads: "Commercial & promotional content designed to convert — product showcases, brand films & ad campaigns.",
+                ads: "Commercial & promotional content designed to convert \u2014 product showcases, brand films & ad campaigns.",
                 events:
-                  "Event coverage & cinematic highlights — weddings, corporate events, launches & celebrations.",
+                  "Event coverage & cinematic highlights \u2014 weddings, corporate events, launches & celebrations.",
                 youtube:
-                  "Long-form content for YouTube — vlogs, brand documentaries, tutorials & channel series.",
+                  "Long-form content for YouTube \u2014 vlogs, brand documentaries, tutorials & channel series.",
               };
               return (
                 <TabsContent key={cat.key} value={cat.key}>

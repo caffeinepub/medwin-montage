@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import PageBackground from "../components/PageBackground";
 import SectionTitle from "../components/SectionTitle";
 import {
+  useGetHomePageContent,
   useGetPublishedBrands,
   useGetPublishedVideos,
   useGetSiteStats,
@@ -28,33 +29,27 @@ const FALLBACK_VIMEO_IDS = [
   "1176462586",
 ];
 
-const services = [
+const DEFAULT_SERVICE_CARDS = [
   {
-    icon: Video,
-    label: "Video Editing",
+    itemLabel: "Video Editing",
     desc: "Professional cuts, color grading & post-production",
   },
   {
-    icon: Camera,
-    label: "Cinematography",
+    itemLabel: "Cinematography",
     desc: "Cinematic shoots with professional equipment",
   },
   {
-    icon: Share2,
-    label: "Content Creation",
+    itemLabel: "Content Creation",
     desc: "Reels, shorts & social media content",
   },
   {
-    icon: TrendingUp,
-    label: "Digital Marketing",
+    itemLabel: "Digital Marketing",
     desc: "Brand growth & campaign management",
   },
-  {
-    icon: Film,
-    label: "Script Writing",
-    desc: "Compelling scripts for any format",
-  },
+  { itemLabel: "Script Writing", desc: "Compelling scripts for any format" },
 ];
+
+const SERVICE_ICONS = [Video, Camera, Share2, TrendingUp, Film];
 
 const fallbackBrands = [
   "Beef Boss Thanjavur",
@@ -173,6 +168,7 @@ export default function Home() {
   const { data: backendVideos } = useGetPublishedVideos();
   const { data: backendBrands } = useGetPublishedBrands();
   const { data: stats } = useGetSiteStats();
+  const { data: pageData } = useGetHomePageContent();
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -180,6 +176,15 @@ export default function Home() {
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  const serviceCards =
+    pageData?.serviceCards && pageData.serviceCards.length > 0
+      ? pageData.serviceCards
+      : DEFAULT_SERVICE_CARDS;
+
+  const ctaTagline = pageData?.ctaTagline || "Create. Capture. Convert.";
+  const ctaButtonLabel = pageData?.ctaButtonLabel || "Start a Project";
+  const ctaButtonLink = pageData?.ctaButtonLink || "https://wa.me/919487897160";
 
   const featuredVideos =
     backendVideos && backendVideos.length > 0
@@ -222,7 +227,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-gold text-xs uppercase tracking-[0.4em] mb-6 font-sans-ui"
           >
-            Freelancers · Tamilnadu
+            Freelancers \u00b7 Tamilnadu
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 40 }}
@@ -312,7 +317,7 @@ export default function Home() {
           <SectionTitle
             accent="Portfolio"
             title="Featured Work"
-            subtitle="Real projects — watch them play right here"
+            subtitle="Real projects \u2014 watch them play right here"
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
             {featuredVideos.map((video, i) => (
@@ -350,14 +355,14 @@ export default function Home() {
           <SectionTitle
             accent="What I Do"
             title="Your Vision, My Edit"
-            subtitle="Full-service creative production — from concept to final delivery"
+            subtitle="Full-service creative production \u2014 from concept to final delivery"
           />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-12">
-            {services.map((svc, i) => {
-              const Icon = svc.icon;
+            {serviceCards.map((svc, i) => {
+              const Icon = SERVICE_ICONS[i % SERVICE_ICONS.length];
               return (
                 <motion.div
-                  key={svc.label}
+                  key={svc.itemLabel}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-30px" }}
@@ -367,7 +372,7 @@ export default function Home() {
                 >
                   <Icon className="w-8 h-8 text-gold mb-3" />
                   <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wide">
-                    {svc.label}
+                    {svc.itemLabel}
                   </h3>
                   <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
                     {svc.desc}
@@ -412,7 +417,7 @@ export default function Home() {
             viewport={{ once: true }}
             className="font-display text-2xl md:text-4xl font-bold text-foreground uppercase leading-tight"
           >
-            Create. Capture. Convert.
+            {ctaTagline}
           </motion.p>
           <motion.p
             initial={{ opacity: 0, y: 10 }}
@@ -431,13 +436,13 @@ export default function Home() {
             className="mt-8 flex flex-wrap gap-4 justify-center"
           >
             <a
-              href="https://wa.me/919487897160"
+              href={ctaButtonLink}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-gold text-primary-foreground px-8 py-4 text-sm font-semibold uppercase tracking-widest hover:bg-gold-light transition-all rounded-sm"
               data-ocid="cta.primary_button"
             >
-              <MessageCircle className="w-4 h-4" /> Start a Project
+              <MessageCircle className="w-4 h-4" /> {ctaButtonLabel}
             </a>
             <Link
               to="/pricing"

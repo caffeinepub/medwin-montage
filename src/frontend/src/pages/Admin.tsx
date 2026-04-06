@@ -49,6 +49,7 @@ import {
   Shield,
 } from "lucide-react";
 import { motion } from "motion/react";
+import type React from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAdmin } from "../contexts/AdminContext";
@@ -59,6 +60,7 @@ import {
   useAddService,
   useAddTestimonial,
   useAddVideo,
+  useGetAboutPageContent,
   useGetAllBrands,
   useGetAllContactEnquiries,
   useGetAllFAQs,
@@ -68,11 +70,19 @@ import {
   useGetAllServices,
   useGetAllTestimonials,
   useGetAllVideos,
+  useGetContactPageContent,
+  useGetContentWritingPageContent,
+  useGetDigitalMarketingPageContent,
+  useGetHomePageContent,
   useGetMonthlyPackage,
   useGetOfficeProfile,
+  useGetPortfolioPageContent,
+  useGetPricingPageContent,
   useGetReelPricing,
+  useGetServicesPageContent,
   useGetSiteStats,
   useGetSliderRates,
+  useGetTestimonialsPageContent,
   useSeedData,
   useSeedPageContent,
   useToggleBrandPublished,
@@ -81,16 +91,25 @@ import {
   useToggleServicePublished,
   useToggleTestimonialPublished,
   useToggleVideoPublished,
+  useUpdateAboutPageContent,
   useUpdateBrand,
+  useUpdateContactPageContent,
+  useUpdateContentWritingPageContent,
+  useUpdateDigitalMarketingPageContent,
+  useUpdateHomePageContent,
   useUpdateMonthlyPackage,
   useUpdateOfficeProfile,
   useUpdatePageContent,
+  useUpdatePortfolioPageContent,
   useUpdatePresetPackage,
+  useUpdatePricingPageContent,
   useUpdatePricingPlan,
   useUpdateReelPricing,
   useUpdateService,
+  useUpdateServicesPageContent,
   useUpdateSiteStats,
   useUpdateSliderRates,
+  useUpdateTestimonialsPageContent,
   useUpdateVideo,
 } from "../hooks/useQueries";
 import {
@@ -2883,65 +2902,1549 @@ const PAGE_IDS = [
   "contact",
 ];
 
-function PagesTab() {
-  const { data: allPages = [], isLoading, refetch } = useGetAllPageContent();
-  const updatePage = useUpdatePageContent();
-  const seedPages = useSeedPageContent();
-  const [selectedPage, setSelectedPage] = useState("home");
-
-  const pageMap = new Map<string, import("../backend.d").PageContent>(
-    allPages.map(([id, content]) => [
-      id,
-      content as import("../backend.d").PageContent,
-    ]),
+function DynList({
+  items,
+  onChange,
+  renderItem,
+  onAdd,
+  addLabel = "Add Item",
+}: {
+  items: any[];
+  onChange: (items: any[]) => void;
+  renderItem: (
+    item: any,
+    index: number,
+    update: (val: any) => void,
+    remove: () => void,
+  ) => React.ReactNode;
+  onAdd: () => any;
+  addLabel?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      {items.map((item, idx) =>
+        renderItem(
+          item,
+          idx,
+          (val) => {
+            const next = [...items];
+            next[idx] = val;
+            onChange(next);
+          },
+          () => onChange(items.filter((_, i) => i !== idx)),
+        ),
+      )}
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={() => onChange([...items, onAdd()])}
+        className="border-gold/30 text-gold hover:bg-gold/10 text-xs uppercase tracking-widest mt-1"
+        data-ocid="admin.secondary_button"
+      >
+        + {addLabel}
+      </Button>
+    </div>
   );
-  const currentContent = pageMap.get(selectedPage);
+}
 
-  const [form, setForm] = useState({
+function Field({
+  label,
+  children,
+}: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs uppercase tracking-widest text-muted-foreground block">
+        {label}
+      </Label>
+      {children}
+    </div>
+  );
+}
+
+const inputCls = "bg-background border-border text-sm";
+const textareaCls = "bg-background border-border text-sm resize-none";
+
+function HomePageEditor() {
+  const { data, isLoading } = useGetHomePageContent();
+  const update = useUpdateHomePageContent();
+  const [form, setForm] = useState<
+    import("../backend.d").HomePageContent | null
+  >(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initialize from data
+  useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data]);
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-8" data-ocid="admin.loading_state">
+        <Loader2 className="animate-spin text-gold" />
+      </div>
+    );
+
+  const f = form ?? {
     heroTitle: "",
     heroSubtitle: "",
+    heroAccent: "",
     heroBackgroundImage: "",
-  });
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: selectedPage triggers form reset
-  useEffect(() => {
-    if (currentContent) {
-      setForm({
-        heroTitle: currentContent.heroTitle,
-        heroSubtitle: currentContent.heroSubtitle,
-        heroBackgroundImage: currentContent.heroBackgroundImage,
-      });
-    } else {
-      setForm({ heroTitle: "", heroSubtitle: "", heroBackgroundImage: "" });
-    }
-  }, [currentContent, selectedPage]);
+    serviceCards: [],
+    ctaTagline: "",
+    ctaButtonLabel: "",
+    ctaButtonLink: "",
+  };
 
   const handleSave = async () => {
     try {
-      await updatePage.mutateAsync({
-        pageId: selectedPage,
-        content: {
-          pageId: selectedPage,
-          heroTitle: form.heroTitle,
-          heroSubtitle: form.heroSubtitle,
-          heroBackgroundImage: form.heroBackgroundImage,
-          sections: currentContent?.sections ?? [],
-        },
-      });
-      toast.success("Page content saved");
-      refetch();
+      await update.mutateAsync(f);
+      toast.success("Home page saved");
     } catch {
       toast.error("Failed to save");
     }
   };
 
+  return (
+    <div className="space-y-5">
+      <Field label="Hero Title">
+        <Input
+          value={f.heroTitle}
+          onChange={(e) => setForm({ ...f, heroTitle: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Subtitle">
+        <Textarea
+          value={f.heroSubtitle}
+          onChange={(e) => setForm({ ...f, heroSubtitle: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="Hero Accent">
+        <Input
+          value={f.heroAccent}
+          onChange={(e) => setForm({ ...f, heroAccent: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Background Image URL">
+        <Input
+          value={f.heroBackgroundImage}
+          onChange={(e) =>
+            setForm({ ...f, heroBackgroundImage: e.target.value })
+          }
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <div>
+        <Label className="text-xs uppercase tracking-widest text-muted-foreground block mb-2">
+          Service Cards
+        </Label>
+        <DynList
+          items={f.serviceCards}
+          onChange={(cards) => setForm({ ...f, serviceCards: cards })}
+          onAdd={() => ({ itemLabel: "", desc: "" })}
+          addLabel="Add Card"
+          renderItem={(card, _i, upd, remove) => (
+            <div
+              key={_i}
+              className="flex gap-2 items-start border border-border/50 rounded-sm p-3"
+            >
+              <div className="flex-1 space-y-2">
+                <Input
+                  value={card.itemLabel}
+                  onChange={(e) => upd({ ...card, itemLabel: e.target.value })}
+                  placeholder="Label"
+                  className={inputCls}
+                />
+                <Input
+                  value={card.desc}
+                  onChange={(e) => upd({ ...card, desc: e.target.value })}
+                  placeholder="Description"
+                  className={inputCls}
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={remove}
+                className="text-destructive px-2 mt-1"
+                data-ocid="admin.delete_button"
+              >
+                \xd7
+              </Button>
+            </div>
+          )}
+        />
+      </div>
+      <Field label="CTA Tagline">
+        <Input
+          value={f.ctaTagline}
+          onChange={(e) => setForm({ ...f, ctaTagline: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="CTA Button Label">
+        <Input
+          value={f.ctaButtonLabel}
+          onChange={(e) => setForm({ ...f, ctaButtonLabel: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="CTA Button Link">
+        <Input
+          value={f.ctaButtonLink}
+          onChange={(e) => setForm({ ...f, ctaButtonLink: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Button
+        onClick={handleSave}
+        disabled={update.isPending}
+        className="bg-gold text-primary-foreground hover:bg-gold-light"
+        data-ocid="admin.save_button"
+      >
+        {update.isPending ? (
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        ) : null}{" "}
+        Save Home Page
+      </Button>
+    </div>
+  );
+}
+
+function AboutPageEditor() {
+  const { data, isLoading } = useGetAboutPageContent();
+  const update = useUpdateAboutPageContent();
+  const [form, setForm] = useState<
+    import("../backend.d").AboutPageContent | null
+  >(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initialize from data
+  useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data]);
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-8" data-ocid="admin.loading_state">
+        <Loader2 className="animate-spin text-gold" />
+      </div>
+    );
+
+  const f = form ?? {
+    heroTitle: "",
+    heroSubtitle: "",
+    heroAccent: "",
+    heroBackgroundImage: "",
+    introHeading: "",
+    introParagraph1: "",
+    introParagraph2: "",
+    introTags: [],
+    aboutImageUrl: "",
+    skills: [],
+    milestones: [],
+    usps: [],
+    ctaHeading: "",
+    ctaBody: "",
+    ctaButtonLabel: "",
+    ctaButtonLink: "",
+  };
+  const tagsStr = Array.isArray(f.introTags) ? f.introTags.join(", ") : "";
+
+  const handleSave = async () => {
+    try {
+      await update.mutateAsync(f);
+      toast.success("About page saved");
+    } catch {
+      toast.error("Failed to save");
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <Field label="Hero Title">
+        <Input
+          value={f.heroTitle}
+          onChange={(e) => setForm({ ...f, heroTitle: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Subtitle">
+        <Textarea
+          value={f.heroSubtitle}
+          onChange={(e) => setForm({ ...f, heroSubtitle: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="Hero Accent">
+        <Input
+          value={f.heroAccent}
+          onChange={(e) => setForm({ ...f, heroAccent: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Background Image URL">
+        <Input
+          value={f.heroBackgroundImage}
+          onChange={(e) =>
+            setForm({ ...f, heroBackgroundImage: e.target.value })
+          }
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Intro Heading">
+        <Input
+          value={f.introHeading}
+          onChange={(e) => setForm({ ...f, introHeading: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Intro Paragraph 1">
+        <Textarea
+          value={f.introParagraph1}
+          onChange={(e) => setForm({ ...f, introParagraph1: e.target.value })}
+          className={textareaCls}
+          rows={3}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="Intro Paragraph 2">
+        <Textarea
+          value={f.introParagraph2}
+          onChange={(e) => setForm({ ...f, introParagraph2: e.target.value })}
+          className={textareaCls}
+          rows={3}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="Intro Tags (comma-separated)">
+        <Input
+          value={tagsStr}
+          onChange={(e) =>
+            setForm({
+              ...f,
+              introTags: e.target.value
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean),
+            })
+          }
+          className={inputCls}
+          placeholder="Tag1, Tag2"
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="About Image URL">
+        <Input
+          value={f.aboutImageUrl}
+          onChange={(e) => setForm({ ...f, aboutImageUrl: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <div>
+        <Label className="text-xs uppercase tracking-widest text-muted-foreground block mb-2">
+          Skills
+        </Label>
+        <DynList
+          items={f.skills}
+          onChange={(skills) => setForm({ ...f, skills })}
+          onAdd={() => ({ itemLabel: "", level: 80n })}
+          addLabel="Add Skill"
+          renderItem={(skill, _i, upd, remove) => (
+            <div
+              key={_i}
+              className="flex gap-2 items-center border border-border/50 rounded-sm p-2"
+            >
+              <Input
+                value={skill.itemLabel}
+                onChange={(e) => upd({ ...skill, itemLabel: e.target.value })}
+                placeholder="Skill name"
+                className={`${inputCls} flex-1`}
+              />
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={Number(skill.level)}
+                onChange={(e) =>
+                  upd({
+                    ...skill,
+                    level: BigInt(
+                      Math.max(0, Math.min(100, Number(e.target.value) || 0)),
+                    ),
+                  })
+                }
+                className={`${inputCls} w-20`}
+                placeholder="%"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={remove}
+                className="text-destructive px-2"
+                data-ocid="admin.delete_button"
+              >
+                \xd7
+              </Button>
+            </div>
+          )}
+        />
+      </div>
+      <div>
+        <Label className="text-xs uppercase tracking-widest text-muted-foreground block mb-2">
+          Timeline Milestones
+        </Label>
+        <DynList
+          items={f.milestones}
+          onChange={(milestones) => setForm({ ...f, milestones })}
+          onAdd={() => ({ year: "", event: "" })}
+          addLabel="Add Milestone"
+          renderItem={(m, _i, upd, remove) => (
+            <div
+              key={_i}
+              className="flex gap-2 items-center border border-border/50 rounded-sm p-2"
+            >
+              <Input
+                value={m.year}
+                onChange={(e) => upd({ ...m, year: e.target.value })}
+                placeholder="Year"
+                className={`${inputCls} w-24`}
+              />
+              <Input
+                value={m.event}
+                onChange={(e) => upd({ ...m, event: e.target.value })}
+                placeholder="Event"
+                className={`${inputCls} flex-1`}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={remove}
+                className="text-destructive px-2"
+                data-ocid="admin.delete_button"
+              >
+                \xd7
+              </Button>
+            </div>
+          )}
+        />
+      </div>
+      <div>
+        <Label className="text-xs uppercase tracking-widest text-muted-foreground block mb-2">
+          USPs (Why Choose Us)
+        </Label>
+        <DynList
+          items={f.usps}
+          onChange={(usps) => setForm({ ...f, usps })}
+          onAdd={() => ({ title: "", desc: "" })}
+          addLabel="Add USP"
+          renderItem={(usp, _i, upd, remove) => (
+            <div
+              key={_i}
+              className="flex gap-2 items-start border border-border/50 rounded-sm p-3"
+            >
+              <div className="flex-1 space-y-2">
+                <Input
+                  value={usp.title}
+                  onChange={(e) => upd({ ...usp, title: e.target.value })}
+                  placeholder="Title"
+                  className={inputCls}
+                />
+                <Input
+                  value={usp.desc}
+                  onChange={(e) => upd({ ...usp, desc: e.target.value })}
+                  placeholder="Description"
+                  className={inputCls}
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={remove}
+                className="text-destructive px-2 mt-1"
+                data-ocid="admin.delete_button"
+              >
+                \xd7
+              </Button>
+            </div>
+          )}
+        />
+      </div>
+      <Field label="CTA Heading">
+        <Input
+          value={f.ctaHeading}
+          onChange={(e) => setForm({ ...f, ctaHeading: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="CTA Body">
+        <Textarea
+          value={f.ctaBody}
+          onChange={(e) => setForm({ ...f, ctaBody: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="CTA Button Label">
+        <Input
+          value={f.ctaButtonLabel}
+          onChange={(e) => setForm({ ...f, ctaButtonLabel: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="CTA Button Link">
+        <Input
+          value={f.ctaButtonLink}
+          onChange={(e) => setForm({ ...f, ctaButtonLink: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Button
+        onClick={handleSave}
+        disabled={update.isPending}
+        className="bg-gold text-primary-foreground hover:bg-gold-light"
+        data-ocid="admin.save_button"
+      >
+        {update.isPending ? (
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        ) : null}{" "}
+        Save About Page
+      </Button>
+    </div>
+  );
+}
+
+function ServicesPageEditor() {
+  const { data, isLoading } = useGetServicesPageContent();
+  const update = useUpdateServicesPageContent();
+  const [form, setForm] = useState<
+    import("../backend.d").ServicesPageContent | null
+  >(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initialize from data
+  useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data]);
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-8" data-ocid="admin.loading_state">
+        <Loader2 className="animate-spin text-gold" />
+      </div>
+    );
+
+  const f = form ?? {
+    heroTitle: "",
+    heroSubtitle: "",
+    heroAccent: "",
+    heroBackgroundImage: "",
+    serviceCards: [],
+    pricingItems: [],
+  };
+
+  const handleSave = async () => {
+    try {
+      await update.mutateAsync(f);
+      toast.success("Services page saved");
+    } catch {
+      toast.error("Failed to save");
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <Field label="Hero Title">
+        <Input
+          value={f.heroTitle}
+          onChange={(e) => setForm({ ...f, heroTitle: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Subtitle">
+        <Textarea
+          value={f.heroSubtitle}
+          onChange={(e) => setForm({ ...f, heroSubtitle: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="Hero Accent">
+        <Input
+          value={f.heroAccent}
+          onChange={(e) => setForm({ ...f, heroAccent: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Background Image URL">
+        <Input
+          value={f.heroBackgroundImage}
+          onChange={(e) =>
+            setForm({ ...f, heroBackgroundImage: e.target.value })
+          }
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <div>
+        <Label className="text-xs uppercase tracking-widest text-muted-foreground block mb-2">
+          Service Cards
+        </Label>
+        <DynList
+          items={f.serviceCards}
+          onChange={(serviceCards) => setForm({ ...f, serviceCards })}
+          onAdd={() => ({ title: "", desc: "", features: [] })}
+          addLabel="Add Service"
+          renderItem={(svc, _i, upd, remove) => (
+            <div
+              key={_i}
+              className="flex gap-2 items-start border border-border/50 rounded-sm p-3"
+            >
+              <div className="flex-1 space-y-2">
+                <Input
+                  value={svc.title}
+                  onChange={(e) => upd({ ...svc, title: e.target.value })}
+                  placeholder="Title"
+                  className={inputCls}
+                />
+                <Textarea
+                  value={svc.desc}
+                  onChange={(e) => upd({ ...svc, desc: e.target.value })}
+                  placeholder="Description"
+                  className={textareaCls}
+                  rows={2}
+                />
+                <Input
+                  value={svc.features.join(", ")}
+                  onChange={(e) =>
+                    upd({
+                      ...svc,
+                      features: e.target.value
+                        .split(",")
+                        .map((s: string) => s.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                  placeholder="Features (comma-separated)"
+                  className={inputCls}
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={remove}
+                className="text-destructive px-2 mt-1"
+                data-ocid="admin.delete_button"
+              >
+                \xd7
+              </Button>
+            </div>
+          )}
+        />
+      </div>
+      <div>
+        <Label className="text-xs uppercase tracking-widest text-muted-foreground block mb-2">
+          Pricing Items
+        </Label>
+        <DynList
+          items={f.pricingItems}
+          onChange={(pricingItems) => setForm({ ...f, pricingItems })}
+          onAdd={() => ({ itemLabel: "", price: "", note: "" })}
+          addLabel="Add Pricing Item"
+          renderItem={(item, _i, upd, remove) => (
+            <div
+              key={_i}
+              className="flex gap-2 items-center border border-border/50 rounded-sm p-2"
+            >
+              <Input
+                value={item.itemLabel}
+                onChange={(e) => upd({ ...item, itemLabel: e.target.value })}
+                placeholder="Label"
+                className={`${inputCls} flex-1`}
+              />
+              <Input
+                value={item.price}
+                onChange={(e) => upd({ ...item, price: e.target.value })}
+                placeholder="Price"
+                className={`${inputCls} w-28`}
+              />
+              <Input
+                value={item.note}
+                onChange={(e) => upd({ ...item, note: e.target.value })}
+                placeholder="Note"
+                className={`${inputCls} w-32`}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={remove}
+                className="text-destructive px-2"
+                data-ocid="admin.delete_button"
+              >
+                \xd7
+              </Button>
+            </div>
+          )}
+        />
+      </div>
+      <Button
+        onClick={handleSave}
+        disabled={update.isPending}
+        className="bg-gold text-primary-foreground hover:bg-gold-light"
+        data-ocid="admin.save_button"
+      >
+        {update.isPending ? (
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        ) : null}{" "}
+        Save Services Page
+      </Button>
+    </div>
+  );
+}
+
+function DigitalMarketingPageEditor() {
+  const { data, isLoading } = useGetDigitalMarketingPageContent();
+  const update = useUpdateDigitalMarketingPageContent();
+  const [form, setForm] = useState<
+    import("../backend.d").DigitalMarketingPageContent | null
+  >(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initialize from data
+  useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data]);
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-8" data-ocid="admin.loading_state">
+        <Loader2 className="animate-spin text-gold" />
+      </div>
+    );
+
+  const f = form ?? {
+    heroTitle: "",
+    heroSubtitle: "",
+    heroAccent: "",
+    heroBackgroundImage: "",
+    areas: [],
+    ctaHeading: "",
+    ctaBody: "",
+    ctaButtonLabel: "",
+    ctaButtonLink: "",
+  };
+
+  const handleSave = async () => {
+    try {
+      await update.mutateAsync(f);
+      toast.success("Digital Marketing page saved");
+    } catch {
+      toast.error("Failed to save");
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <Field label="Hero Title">
+        <Input
+          value={f.heroTitle}
+          onChange={(e) => setForm({ ...f, heroTitle: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Subtitle">
+        <Textarea
+          value={f.heroSubtitle}
+          onChange={(e) => setForm({ ...f, heroSubtitle: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="Hero Accent">
+        <Input
+          value={f.heroAccent}
+          onChange={(e) => setForm({ ...f, heroAccent: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Background Image URL">
+        <Input
+          value={f.heroBackgroundImage}
+          onChange={(e) =>
+            setForm({ ...f, heroBackgroundImage: e.target.value })
+          }
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <div>
+        <Label className="text-xs uppercase tracking-widest text-muted-foreground block mb-2">
+          Service Areas
+        </Label>
+        <DynList
+          items={f.areas}
+          onChange={(areas) => setForm({ ...f, areas })}
+          onAdd={() => ({ title: "", desc: "", deliverables: [] })}
+          addLabel="Add Area"
+          renderItem={(area, _i, upd, remove) => (
+            <div
+              key={_i}
+              className="flex gap-2 items-start border border-border/50 rounded-sm p-3"
+            >
+              <div className="flex-1 space-y-2">
+                <Input
+                  value={area.title}
+                  onChange={(e) => upd({ ...area, title: e.target.value })}
+                  placeholder="Title"
+                  className={inputCls}
+                />
+                <Textarea
+                  value={area.desc}
+                  onChange={(e) => upd({ ...area, desc: e.target.value })}
+                  placeholder="Description"
+                  className={textareaCls}
+                  rows={2}
+                />
+                <Input
+                  value={area.deliverables.join(", ")}
+                  onChange={(e) =>
+                    upd({
+                      ...area,
+                      deliverables: e.target.value
+                        .split(",")
+                        .map((s: string) => s.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                  placeholder="Deliverables (comma-separated)"
+                  className={inputCls}
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={remove}
+                className="text-destructive px-2 mt-1"
+                data-ocid="admin.delete_button"
+              >
+                \xd7
+              </Button>
+            </div>
+          )}
+        />
+      </div>
+      <Field label="CTA Heading">
+        <Input
+          value={f.ctaHeading}
+          onChange={(e) => setForm({ ...f, ctaHeading: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="CTA Body">
+        <Textarea
+          value={f.ctaBody}
+          onChange={(e) => setForm({ ...f, ctaBody: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="CTA Button Label">
+        <Input
+          value={f.ctaButtonLabel}
+          onChange={(e) => setForm({ ...f, ctaButtonLabel: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="CTA Button Link">
+        <Input
+          value={f.ctaButtonLink}
+          onChange={(e) => setForm({ ...f, ctaButtonLink: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Button
+        onClick={handleSave}
+        disabled={update.isPending}
+        className="bg-gold text-primary-foreground hover:bg-gold-light"
+        data-ocid="admin.save_button"
+      >
+        {update.isPending ? (
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        ) : null}{" "}
+        Save Digital Marketing Page
+      </Button>
+    </div>
+  );
+}
+
+function ContentWritingPageEditor() {
+  const { data, isLoading } = useGetContentWritingPageContent();
+  const update = useUpdateContentWritingPageContent();
+  const [form, setForm] = useState<
+    import("../backend.d").ContentWritingPageContent | null
+  >(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initialize from data
+  useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data]);
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-8" data-ocid="admin.loading_state">
+        <Loader2 className="animate-spin text-gold" />
+      </div>
+    );
+
+  const f = form ?? {
+    heroTitle: "",
+    heroSubtitle: "",
+    heroAccent: "",
+    heroBackgroundImage: "",
+    areas: [],
+    ctaHeading: "",
+    ctaBody: "",
+    ctaButtonLabel: "",
+    ctaButtonLink: "",
+  };
+
+  const handleSave = async () => {
+    try {
+      await update.mutateAsync(f);
+      toast.success("Content Writing page saved");
+    } catch {
+      toast.error("Failed to save");
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <Field label="Hero Title">
+        <Input
+          value={f.heroTitle}
+          onChange={(e) => setForm({ ...f, heroTitle: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Subtitle">
+        <Textarea
+          value={f.heroSubtitle}
+          onChange={(e) => setForm({ ...f, heroSubtitle: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="Hero Accent">
+        <Input
+          value={f.heroAccent}
+          onChange={(e) => setForm({ ...f, heroAccent: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Background Image URL">
+        <Input
+          value={f.heroBackgroundImage}
+          onChange={(e) =>
+            setForm({ ...f, heroBackgroundImage: e.target.value })
+          }
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <div>
+        <Label className="text-xs uppercase tracking-widest text-muted-foreground block mb-2">
+          Content Areas
+        </Label>
+        <DynList
+          items={f.areas}
+          onChange={(areas) => setForm({ ...f, areas })}
+          onAdd={() => ({ title: "", desc: "", types: [] })}
+          addLabel="Add Area"
+          renderItem={(area, _i, upd, remove) => (
+            <div
+              key={_i}
+              className="flex gap-2 items-start border border-border/50 rounded-sm p-3"
+            >
+              <div className="flex-1 space-y-2">
+                <Input
+                  value={area.title}
+                  onChange={(e) => upd({ ...area, title: e.target.value })}
+                  placeholder="Title"
+                  className={inputCls}
+                />
+                <Textarea
+                  value={area.desc}
+                  onChange={(e) => upd({ ...area, desc: e.target.value })}
+                  placeholder="Description"
+                  className={textareaCls}
+                  rows={2}
+                />
+                <Input
+                  value={area.types.join(", ")}
+                  onChange={(e) =>
+                    upd({
+                      ...area,
+                      types: e.target.value
+                        .split(",")
+                        .map((s: string) => s.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                  placeholder="Types (comma-separated)"
+                  className={inputCls}
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={remove}
+                className="text-destructive px-2 mt-1"
+                data-ocid="admin.delete_button"
+              >
+                \xd7
+              </Button>
+            </div>
+          )}
+        />
+      </div>
+      <Field label="CTA Heading">
+        <Input
+          value={f.ctaHeading}
+          onChange={(e) => setForm({ ...f, ctaHeading: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="CTA Body">
+        <Textarea
+          value={f.ctaBody}
+          onChange={(e) => setForm({ ...f, ctaBody: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="CTA Button Label">
+        <Input
+          value={f.ctaButtonLabel}
+          onChange={(e) => setForm({ ...f, ctaButtonLabel: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="CTA Button Link">
+        <Input
+          value={f.ctaButtonLink}
+          onChange={(e) => setForm({ ...f, ctaButtonLink: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Button
+        onClick={handleSave}
+        disabled={update.isPending}
+        className="bg-gold text-primary-foreground hover:bg-gold-light"
+        data-ocid="admin.save_button"
+      >
+        {update.isPending ? (
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        ) : null}{" "}
+        Save Content Writing Page
+      </Button>
+    </div>
+  );
+}
+
+function TestimonialsPageEditor() {
+  const { data, isLoading } = useGetTestimonialsPageContent();
+  const update = useUpdateTestimonialsPageContent();
+  const [form, setForm] = useState<
+    import("../backend.d").TestimonialsPageContent | null
+  >(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initialize from data
+  useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data]);
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-8" data-ocid="admin.loading_state">
+        <Loader2 className="animate-spin text-gold" />
+      </div>
+    );
+
+  const f = form ?? {
+    heroTitle: "",
+    heroSubtitle: "",
+    heroAccent: "",
+    heroBackgroundImage: "",
+    ctaHeading: "",
+    ctaBody: "",
+    ctaButtonLabel: "",
+    ctaButtonLink: "",
+  };
+
+  const handleSave = async () => {
+    try {
+      await update.mutateAsync(f);
+      toast.success("Testimonials page saved");
+    } catch {
+      toast.error("Failed to save");
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <Field label="Hero Title">
+        <Input
+          value={f.heroTitle}
+          onChange={(e) => setForm({ ...f, heroTitle: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Subtitle">
+        <Textarea
+          value={f.heroSubtitle}
+          onChange={(e) => setForm({ ...f, heroSubtitle: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="Hero Accent">
+        <Input
+          value={f.heroAccent}
+          onChange={(e) => setForm({ ...f, heroAccent: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Background Image URL">
+        <Input
+          value={f.heroBackgroundImage}
+          onChange={(e) =>
+            setForm({ ...f, heroBackgroundImage: e.target.value })
+          }
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="CTA Heading">
+        <Input
+          value={f.ctaHeading}
+          onChange={(e) => setForm({ ...f, ctaHeading: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="CTA Body">
+        <Textarea
+          value={f.ctaBody}
+          onChange={(e) => setForm({ ...f, ctaBody: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="CTA Button Label">
+        <Input
+          value={f.ctaButtonLabel}
+          onChange={(e) => setForm({ ...f, ctaButtonLabel: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="CTA Button Link">
+        <Input
+          value={f.ctaButtonLink}
+          onChange={(e) => setForm({ ...f, ctaButtonLink: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Button
+        onClick={handleSave}
+        disabled={update.isPending}
+        className="bg-gold text-primary-foreground hover:bg-gold-light"
+        data-ocid="admin.save_button"
+      >
+        {update.isPending ? (
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        ) : null}{" "}
+        Save Testimonials Page
+      </Button>
+    </div>
+  );
+}
+
+function ContactPageEditor() {
+  const { data, isLoading } = useGetContactPageContent();
+  const update = useUpdateContactPageContent();
+  const [form, setForm] = useState<
+    import("../backend.d").ContactPageContent | null
+  >(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initialize from data
+  useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data]);
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-8" data-ocid="admin.loading_state">
+        <Loader2 className="animate-spin text-gold" />
+      </div>
+    );
+
+  const f = form ?? {
+    heroTitle: "",
+    heroSubtitle: "",
+    heroAccent: "",
+    heroBackgroundImage: "",
+  };
+
+  const handleSave = async () => {
+    try {
+      await update.mutateAsync(f);
+      toast.success("Contact page saved");
+    } catch {
+      toast.error("Failed to save");
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <Field label="Hero Title">
+        <Input
+          value={f.heroTitle}
+          onChange={(e) => setForm({ ...f, heroTitle: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Subtitle">
+        <Textarea
+          value={f.heroSubtitle}
+          onChange={(e) => setForm({ ...f, heroSubtitle: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="Hero Accent">
+        <Input
+          value={f.heroAccent}
+          onChange={(e) => setForm({ ...f, heroAccent: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Background Image URL">
+        <Input
+          value={f.heroBackgroundImage}
+          onChange={(e) =>
+            setForm({ ...f, heroBackgroundImage: e.target.value })
+          }
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Button
+        onClick={handleSave}
+        disabled={update.isPending}
+        className="bg-gold text-primary-foreground hover:bg-gold-light"
+        data-ocid="admin.save_button"
+      >
+        {update.isPending ? (
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        ) : null}{" "}
+        Save Contact Page
+      </Button>
+    </div>
+  );
+}
+
+function PortfolioPageEditor() {
+  const { data, isLoading } = useGetPortfolioPageContent();
+  const update = useUpdatePortfolioPageContent();
+  const [form, setForm] = useState<
+    import("../backend.d").PortfolioPageContent | null
+  >(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initialize from data
+  useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data]);
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-8" data-ocid="admin.loading_state">
+        <Loader2 className="animate-spin text-gold" />
+      </div>
+    );
+
+  const f = form ?? {
+    heroTitle: "",
+    heroSubtitle: "",
+    heroAccent: "",
+    heroBackgroundImage: "",
+  };
+
+  const handleSave = async () => {
+    try {
+      await update.mutateAsync(f);
+      toast.success("Portfolio page saved");
+    } catch {
+      toast.error("Failed to save");
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <Field label="Hero Title">
+        <Input
+          value={f.heroTitle}
+          onChange={(e) => setForm({ ...f, heroTitle: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Subtitle">
+        <Textarea
+          value={f.heroSubtitle}
+          onChange={(e) => setForm({ ...f, heroSubtitle: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="Hero Accent">
+        <Input
+          value={f.heroAccent}
+          onChange={(e) => setForm({ ...f, heroAccent: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Background Image URL">
+        <Input
+          value={f.heroBackgroundImage}
+          onChange={(e) =>
+            setForm({ ...f, heroBackgroundImage: e.target.value })
+          }
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Button
+        onClick={handleSave}
+        disabled={update.isPending}
+        className="bg-gold text-primary-foreground hover:bg-gold-light"
+        data-ocid="admin.save_button"
+      >
+        {update.isPending ? (
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        ) : null}{" "}
+        Save Portfolio Page
+      </Button>
+    </div>
+  );
+}
+
+function PricingPageEditor() {
+  const { data, isLoading } = useGetPricingPageContent();
+  const update = useUpdatePricingPageContent();
+  const [form, setForm] = useState<
+    import("../backend.d").PricingPageContent | null
+  >(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initialize from data
+  useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data]);
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-8" data-ocid="admin.loading_state">
+        <Loader2 className="animate-spin text-gold" />
+      </div>
+    );
+
+  const f = form ?? {
+    heroTitle: "",
+    heroSubtitle: "",
+    heroAccent: "",
+    heroBackgroundImage: "",
+    choosePlanHeading: "",
+    choosePlanSubtext: "",
+  };
+
+  const handleSave = async () => {
+    try {
+      await update.mutateAsync(f);
+      toast.success("Pricing page saved");
+    } catch {
+      toast.error("Failed to save");
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <Field label="Hero Title">
+        <Input
+          value={f.heroTitle}
+          onChange={(e) => setForm({ ...f, heroTitle: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Subtitle">
+        <Textarea
+          value={f.heroSubtitle}
+          onChange={(e) => setForm({ ...f, heroSubtitle: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Field label="Hero Accent">
+        <Input
+          value={f.heroAccent}
+          onChange={(e) => setForm({ ...f, heroAccent: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Hero Background Image URL">
+        <Input
+          value={f.heroBackgroundImage}
+          onChange={(e) =>
+            setForm({ ...f, heroBackgroundImage: e.target.value })
+          }
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Choose Plan Heading">
+        <Input
+          value={f.choosePlanHeading}
+          onChange={(e) => setForm({ ...f, choosePlanHeading: e.target.value })}
+          className={inputCls}
+          data-ocid="admin.input"
+        />
+      </Field>
+      <Field label="Choose Plan Subtext">
+        <Textarea
+          value={f.choosePlanSubtext}
+          onChange={(e) => setForm({ ...f, choosePlanSubtext: e.target.value })}
+          className={textareaCls}
+          rows={2}
+          data-ocid="admin.textarea"
+        />
+      </Field>
+      <Button
+        onClick={handleSave}
+        disabled={update.isPending}
+        className="bg-gold text-primary-foreground hover:bg-gold-light"
+        data-ocid="admin.save_button"
+      >
+        {update.isPending ? (
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        ) : null}{" "}
+        Save Pricing Page
+      </Button>
+    </div>
+  );
+}
+
+function PagesTab() {
+  const seedPages = useSeedPageContent();
+  const [selectedPage, setSelectedPage] = useState("home");
+
   const handleSeedPages = async () => {
     try {
       await seedPages.mutateAsync();
       toast.success("Page defaults seeded!");
-      refetch();
     } catch {
       toast.error("Failed to seed");
+    }
+  };
+
+  const PAGE_LABELS: Record<string, string> = {
+    home: "Home",
+    about: "About",
+    portfolio: "Portfolio",
+    services: "Services",
+    "digital-marketing": "Digital Marketing",
+    "content-writing": "Content Writing",
+    testimonials: "Testimonials",
+    pricing: "Pricing",
+    contact: "Contact",
+  };
+
+  const renderEditor = () => {
+    switch (selectedPage) {
+      case "home":
+        return <HomePageEditor />;
+      case "about":
+        return <AboutPageEditor />;
+      case "portfolio":
+        return <PortfolioPageEditor />;
+      case "services":
+        return <ServicesPageEditor />;
+      case "digital-marketing":
+        return <DigitalMarketingPageEditor />;
+      case "content-writing":
+        return <ContentWritingPageEditor />;
+      case "testimonials":
+        return <TestimonialsPageEditor />;
+      case "pricing":
+        return <PricingPageEditor />;
+      case "contact":
+        return <ContactPageEditor />;
+      default:
+        return null;
     }
   };
 
@@ -2961,214 +4464,36 @@ function PagesTab() {
         >
           {seedPages.isPending ? (
             <Loader2 className="w-3 h-3 animate-spin mr-1" />
-          ) : null}
+          ) : null}{" "}
           Seed Page Defaults
         </Button>
       </div>
-
-      {isLoading ? (
-        <div
-          className="flex items-center justify-center py-12"
-          data-ocid="admin.loading_state"
-        >
-          <Loader2 className="animate-spin text-gold" />
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-4 gap-6">
-          {/* Page selector */}
-          <div className="md:col-span-1">
-            <div className="bg-card border border-border rounded-sm overflow-hidden">
-              {PAGE_IDS.map((pid) => (
-                <button
-                  key={pid}
-                  type="button"
-                  onClick={() => setSelectedPage(pid)}
-                  className={`w-full text-left px-4 py-3 text-xs uppercase tracking-widest border-b border-border/50 last:border-0 transition-colors ${
-                    selectedPage === pid
-                      ? "bg-gold/10 text-gold"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  data-ocid="admin.tab"
-                >
-                  {pid.replace("-", " ")}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Editor */}
-          <div className="md:col-span-3 bg-card border border-border rounded-sm p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-widest">
-              Editing: <span className="text-gold">{selectedPage}</span>
-            </h3>
-            <div>
-              <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
-                Hero Title
-              </Label>
-              <Input
-                value={form.heroTitle}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, heroTitle: e.target.value }))
-                }
-                className="bg-background border-border"
-                data-ocid="admin.input"
-              />
-            </div>
-            <div>
-              <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
-                Hero Subtitle
-              </Label>
-              <Textarea
-                value={form.heroSubtitle}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, heroSubtitle: e.target.value }))
-                }
-                className="bg-background border-border"
-                data-ocid="admin.textarea"
-              />
-            </div>
-            <div>
-              <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
-                Hero Background Image URL
-              </Label>
-              <Input
-                value={form.heroBackgroundImage}
-                onChange={(e) =>
-                  setForm((p) => ({
-                    ...p,
-                    heroBackgroundImage: e.target.value,
-                  }))
-                }
-                className="bg-background border-border"
-                data-ocid="admin.input"
-              />
-            </div>
-
-            {currentContent?.sections && currentContent.sections.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-xs uppercase tracking-widest text-muted-foreground mb-3">
-                  Sections
-                </h4>
-                <div className="space-y-3">
-                  {currentContent.sections.map((section, si) => (
-                    <SectionEditor
-                      key={section.id}
-                      section={section}
-                      index={si}
-                      onSave={async (updated) => {
-                        const sections = [...(currentContent.sections ?? [])];
-                        sections[si] = updated;
-                        await updatePage.mutateAsync({
-                          pageId: selectedPage,
-                          content: { ...currentContent, sections },
-                        });
-                        toast.success("Section saved");
-                        refetch();
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <Button
-              onClick={handleSave}
-              disabled={updatePage.isPending}
-              className="bg-gold text-primary-foreground hover:bg-gold-light"
-              data-ocid="admin.save_button"
-            >
-              {updatePage.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : null}{" "}
-              Save Page Content
-            </Button>
+      <div className="grid md:grid-cols-4 gap-6">
+        <div className="md:col-span-1">
+          <div className="bg-card border border-border rounded-sm overflow-hidden">
+            {PAGE_IDS.map((pid) => (
+              <button
+                key={pid}
+                type="button"
+                onClick={() => setSelectedPage(pid)}
+                className={`w-full text-left px-4 py-3 text-xs uppercase tracking-widest border-b border-border/50 last:border-0 transition-colors ${selectedPage === pid ? "bg-gold/10 text-gold" : "text-muted-foreground hover:text-foreground"}`}
+                data-ocid="admin.tab"
+              >
+                {PAGE_LABELS[pid] || pid.replace("-", " ")}
+              </button>
+            ))}
           </div>
         </div>
-      )}
-    </div>
-  );
-}
-
-function SectionEditor({
-  section,
-  index,
-  onSave,
-}: {
-  section: {
-    id: string;
-    heading: string;
-    description: string;
-    imageUrl: string;
-    visible: boolean;
-  };
-  index: number;
-  onSave: (updated: typeof section) => Promise<void>;
-}) {
-  const [form, setForm] = useState({
-    heading: section.heading,
-    description: section.description,
-    imageUrl: section.imageUrl,
-    visible: section.visible,
-  });
-  const [saving, setSaving] = useState(false);
-
-  return (
-    <div
-      className="border border-border/60 rounded-sm p-4 space-y-3"
-      data-ocid={`admin.item.${index + 1}`}
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gold uppercase tracking-widest">
-          {section.id}
-        </span>
-        <div className="flex items-center gap-2">
-          <Label className="text-xs text-muted-foreground">Visible</Label>
-          <Switch
-            checked={form.visible}
-            onCheckedChange={(v) => setForm((p) => ({ ...p, visible: v }))}
-            data-ocid="admin.switch"
-          />
+        <div className="md:col-span-3 bg-card border border-border rounded-sm p-6">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-widest mb-5">
+            Editing:{" "}
+            <span className="text-gold">
+              {PAGE_LABELS[selectedPage] || selectedPage}
+            </span>
+          </h3>
+          {renderEditor()}
         </div>
       </div>
-      <div>
-        <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
-          Heading
-        </Label>
-        <Input
-          value={form.heading}
-          onChange={(e) => setForm((p) => ({ ...p, heading: e.target.value }))}
-          className="bg-background border-border text-sm"
-          data-ocid="admin.input"
-        />
-      </div>
-      <div>
-        <Label className="text-xs uppercase tracking-widest text-muted-foreground mb-1 block">
-          Description
-        </Label>
-        <Textarea
-          value={form.description}
-          onChange={(e) =>
-            setForm((p) => ({ ...p, description: e.target.value }))
-          }
-          rows={2}
-          className="bg-background border-border text-sm"
-          data-ocid="admin.textarea"
-        />
-      </div>
-      <Button
-        onClick={async () => {
-          setSaving(true);
-          await onSave({ ...section, ...form });
-          setSaving(false);
-        }}
-        disabled={saving}
-        size="sm"
-        className="bg-gold/80 text-primary-foreground hover:bg-gold text-xs"
-        data-ocid="admin.save_button"
-      >
-        {saving ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null} Save
-        Section
-      </Button>
     </div>
   );
 }
